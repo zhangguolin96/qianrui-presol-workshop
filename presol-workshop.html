@@ -334,13 +334,223 @@
     pointer-events: none;
   }
 
+  /* —— 墙上声光报警器（红框位置 ≈ 77% × 15%） —— */
+  .wall-alarm {
+    position: absolute;
+    left: 77%;
+    top: 15%;
+    width: min(5.2vw, 78px);
+    height: min(7.2vw, 108px);
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.45));
+  }
+
+  .wall-alarm__mount {
+    position: absolute;
+    left: 50%;
+    top: 8%;
+    width: 42%;
+    height: 10%;
+    transform: translateX(-50%);
+    border-radius: 3px;
+    background: linear-gradient(180deg, #6a7078, #2c3036);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+
+  .wall-alarm__body {
+    position: absolute;
+    left: 50%;
+    top: 14%;
+    bottom: 0;
+    width: 78%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wall-alarm__dome {
+    width: 88%;
+    aspect-ratio: 1;
+    border-radius: 50% 50% 46% 46%;
+    background:
+      radial-gradient(circle at 35% 28%, rgba(255,180,180,0.95), rgba(220,20,30,0.92) 42%, #8a0610 78%, #3a0206 100%);
+    box-shadow:
+      inset 0 -6px 10px rgba(0,0,0,0.35),
+      inset 0 4px 8px rgba(255,255,255,0.35),
+      0 0 0 2px rgba(40,40,44,0.9);
+    position: relative;
+    z-index: 2;
+  }
+
+  .wall-alarm__dome::after {
+    content: "";
+    position: absolute;
+    inset: 18% 22% auto;
+    height: 28%;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.55), transparent);
+    opacity: 0.7;
+  }
+
+  .wall-alarm__collar {
+    width: 92%;
+    height: 9%;
+    margin-top: -4%;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #d8dde4, #7a828c 55%, #3a4048);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+    z-index: 3;
+  }
+
+  .wall-alarm__base {
+    width: 100%;
+    flex: 1;
+    margin-top: 2%;
+    border-radius: 4px 4px 6px 6px;
+    background: linear-gradient(160deg, #4a5058, #1c1f24 70%, #0c0e10);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.12),
+      inset 0 -8px 12px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wall-alarm__grille {
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    top: 18%;
+    bottom: 22%;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        transparent 0 3px,
+        rgba(0,0,0,0.55) 3px 4px
+      ),
+      linear-gradient(90deg, #2a2e34, #5a616a 50%, #2a2e34);
+    border-radius: 3px;
+    opacity: 0.9;
+  }
+
+  .wall-alarm__led {
+    position: absolute;
+    left: 50%;
+    bottom: 7%;
+    width: 18%;
+    height: 8%;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: #1a3d24;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
+  }
+
+  .wall-alarm__wash {
+    position: absolute;
+    left: 50%;
+    top: 42%;
+    width: 220%;
+    height: 180%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,40,40,0.45), transparent 62%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: screen;
+  }
+
+  .wall-alarm.is-armed .wall-alarm__dome {
+    animation: alarm-flash 0.7s ease-in-out infinite;
+  }
+  .wall-alarm.is-armed .wall-alarm__wash {
+    animation: alarm-wash 0.7s ease-in-out infinite;
+  }
+  .wall-alarm.is-armed .wall-alarm__led {
+    background: #ff3040;
+    box-shadow: 0 0 8px rgba(255,48,64,0.95), 0 0 16px rgba(255,40,40,0.55);
+  }
+  .wall-alarm.is-armed.is-critical .wall-alarm__dome {
+    animation-duration: 0.42s;
+  }
+  .wall-alarm.is-armed.is-critical .wall-alarm__wash {
+    animation-duration: 0.42s;
+    background: radial-gradient(circle, rgba(255,20,20,0.55), transparent 62%);
+  }
+
+  @keyframes alarm-flash {
+    0%, 100% { filter: brightness(0.75) saturate(1.1); }
+    50% { filter: brightness(1.55) saturate(1.35); }
+  }
+  @keyframes alarm-wash {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.85; }
+  }
+
+  .alarm-toast {
+    position: absolute;
+    left: 50%;
+    bottom: 56px;
+    transform: translateX(-50%) translateY(12px);
+    z-index: 8;
+    min-width: min(72vw, 420px);
+    max-width: min(86vw, 560px);
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(40, 6, 10, 0.82);
+    border: 1px solid rgba(255, 70, 80, 0.55);
+    color: #ffe8ea;
+    font: 600 13px/1.45 system-ui, sans-serif;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.4), 0 0 24px rgba(255,40,50,0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .alarm-toast.is-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .alarm-toast small {
+    display: block;
+    margin-top: 3px;
+    font-weight: 500;
+    font-size: 11px;
+    color: rgba(255,200,205,0.75);
+  }
+
+  .alarm-arm {
+    position: absolute;
+    left: 18px;
+    bottom: 14px;
+    z-index: 8;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 80, 90, 0.45);
+    background: rgba(30, 4, 8, 0.72);
+    color: #ffd0d4;
+    font: 600 12px/1.3 system-ui, sans-serif;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  }
+  .alarm-arm:hover { border-color: rgba(255,120,130,0.7); }
+  .alarm-arm.is-on {
+    border-color: rgba(60, 220, 120, 0.5);
+    background: rgba(4, 28, 14, 0.72);
+    color: #c8ffe0;
+  }
+
   @media (max-width: 900px) {
     .tv-stage { width: min(52vw, 560px); left: 60%; top: 40%; }
     .hint { display: none; }
+    .wall-alarm { width: min(7vw, 64px); height: min(9.5vw, 88px); }
   }
 
   @media (max-width: 640px) {
     .tv-stage { width: min(68vw, 420px); left: 56%; top: 38%; }
+    .wall-alarm { left: 78%; top: 14%; }
   }
 </style>
 </head>
@@ -351,7 +561,21 @@
 
     <div class="scene__label">
       合肥乾锐科技 · 预溶车间
-      <small>墙上触控电视 · 实时 DCS 孪生</small>
+      <small>墙上触控电视 · 声光联动告警</small>
+    </div>
+
+    <!-- 声光报警器：红框位置 -->
+    <div class="wall-alarm is-armed is-critical" id="wall-alarm" aria-label="预溶车间声光报警器" title="声光报警器">
+      <div class="wall-alarm__wash" aria-hidden="true"></div>
+      <div class="wall-alarm__mount" aria-hidden="true"></div>
+      <div class="wall-alarm__body">
+        <div class="wall-alarm__dome" aria-hidden="true"></div>
+        <div class="wall-alarm__collar" aria-hidden="true"></div>
+        <div class="wall-alarm__base" aria-hidden="true">
+          <div class="wall-alarm__grille"></div>
+          <div class="wall-alarm__led"></div>
+        </div>
+      </div>
     </div>
 
     <div class="tv-stage">
@@ -386,7 +610,9 @@
       </div>
     </div>
 
-    <div class="hint">触控电视 · 挂墙于预溶车间后墙 · 仅展示预溶业务</div>
+    <div class="alarm-toast" id="alarm-toast" role="status" aria-live="assertive"></div>
+    <button type="button" class="alarm-arm" id="alarm-arm">开启声光告警 · 语音播报</button>
+    <div class="hint">触控电视 · 挂墙于预溶车间后墙 · 声光异常联动</div>
   </div>
 
 <script>
@@ -418,6 +644,159 @@
     new ResizeObserver(function () { fit(); }).observe(viewport);
   }
   iframe.addEventListener("load", fit);
+
+  /* —— 生产异常声光 / 语音告警 —— */
+  var ALERTS = [
+    {
+      level: "critical",
+      title: "紧急 · R-205 水分超标",
+      detail: "动力电解液 H₂O 28ppm，限值 ≤20ppm",
+      voice: "预溶车间生产异常告警。二零五号预溶釜水分超标，当前二十八ppm，超过限值二十ppm，请现场立即处理。"
+    },
+    {
+      level: "urgent",
+      title: "次紧急 · 投料偏差",
+      detail: "配方 QR-DY-NCM811，VC +0.12%，超时 1.6 小时",
+      voice: "预溶车间生产异常告警。预溶投料出现偏差，配方 N C M 八一一，VC 偏高零点一二个百分点，请核对投料。"
+    },
+    {
+      level: "urgent",
+      title: "次紧急 · R-203 氮封微正压低",
+      detail: "当前 0.8 kPa，设定 2–5 kPa",
+      voice: "预溶车间生产异常告警。二零三号预溶釜氮气微正压偏低，当前零点八千帕，请检查氮封系统。"
+    },
+    {
+      level: "critical",
+      title: "紧急 · 质量 OOS",
+      detail: "批次 QR260724B03，R-205 水分超标未关闭",
+      voice: "预溶车间质量告警。批次 B 零三判定 O O S，关联二零五号釜，水分超标未关闭，请质量与班长协同处置。"
+    }
+  ];
+
+  var alarmEl = document.getElementById("wall-alarm");
+  var toastEl = document.getElementById("alarm-toast");
+  var armBtn = document.getElementById("alarm-arm");
+  var armed = false;
+  var idx = 0;
+  var audioCtx = null;
+  var sirenTimer = null;
+  var loopTimer = null;
+  var speaking = false;
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playSiren(ms, critical) {
+    var ctx = ensureAudio();
+    if (!ctx) return;
+    var duration = (ms || 1800) / 1000;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(critical ? 880 : 740, ctx.currentTime);
+    var t0 = ctx.currentTime;
+    for (var i = 0; i < 8; i++) {
+      var t = t0 + i * 0.22;
+      osc.frequency.setValueAtTime(critical ? 880 : 740, t);
+      osc.frequency.setValueAtTime(critical ? 620 : 520, t + 0.11);
+    }
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.045, t0 + 0.05);
+    gain.gain.setValueAtTime(0.045, t0 + duration - 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.02);
+  }
+
+  function speak(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "zh-CN";
+    u.rate = 1.05;
+    u.pitch = 1;
+    u.volume = 1;
+    speaking = true;
+    u.onend = function () { speaking = false; };
+    u.onerror = function () { speaking = false; };
+    /* Prefer a Chinese voice when available */
+    var voices = window.speechSynthesis.getVoices() || [];
+    var zh = voices.find(function (v) { return /zh(-|_)?CN|Chinese|中文|普通话/i.test(v.lang + v.name); });
+    if (zh) u.voice = zh;
+    window.speechSynthesis.speak(u);
+  }
+
+  function showToast(alert) {
+    toastEl.innerHTML = alert.title + "<small>" + alert.detail + "</small>";
+    toastEl.classList.add("is-show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () {
+      toastEl.classList.remove("is-show");
+    }, 6500);
+  }
+
+  function fireAlert() {
+    if (!armed) return;
+    var alert = ALERTS[idx % ALERTS.length];
+    idx += 1;
+    var critical = alert.level === "critical";
+    alarmEl.classList.toggle("is-critical", critical);
+    alarmEl.classList.add("is-armed");
+    showToast(alert);
+    playSiren(critical ? 2000 : 1600, critical);
+    setTimeout(function () { speak(alert.voice); }, 700);
+  }
+
+  function startLoop() {
+    stopLoop();
+    fireAlert();
+    loopTimer = setInterval(function () {
+      if (!speaking) fireAlert();
+    }, 22000);
+  }
+
+  function stopLoop() {
+    if (loopTimer) clearInterval(loopTimer);
+    loopTimer = null;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+
+  function setArmed(on) {
+    armed = on;
+    armBtn.classList.toggle("is-on", on);
+    armBtn.textContent = on ? "声光告警已开启 · 点击静音" : "开启声光告警 · 语音播报";
+    if (on) {
+      ensureAudio();
+      if (window.speechSynthesis) window.speechSynthesis.getVoices();
+      startLoop();
+    } else {
+      stopLoop();
+      toastEl.classList.remove("is-show");
+      /* keep visual beacon flashing as standby plant alarm look */
+      alarmEl.classList.add("is-armed");
+    }
+  }
+
+  armBtn.addEventListener("click", function () {
+    setArmed(!armed);
+  });
+
+  /* Warm up voices list (Chrome loads async) */
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = function () {
+      window.speechSynthesis.getVoices();
+    };
+  }
 })();
 </script>
 </body>
