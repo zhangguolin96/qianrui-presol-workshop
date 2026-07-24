@@ -3,46 +3,74 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>乾锐科技 · 预溶车间现场大屏</title>
+<title>乾锐科技 · 预溶车间墙上电视 · 预溶驾驶舱</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0c; }
-
-  .scene { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
-
-  .scene__wall {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; object-position: 52% 42%;
-    user-select: none; pointer-events: none;
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #0a0a0c;
   }
 
-  /* Soft vignette so TV reads clearer on busy plant photo */
+  .scene {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .scene__wall {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Aim at blank rear panel wall between tanks and glass room */
+    object-position: 50% 38%;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Keep plant readable; lighten only behind TV */
   .scene__shade {
-    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
     background:
-      radial-gradient(ellipse 70% 60% at 48% 38%, transparent 35%, rgba(0,0,0,0.35) 100%),
-      linear-gradient(180deg, rgba(0,0,0,0.18), transparent 28%, transparent 72%, rgba(0,0,0,0.28));
+      radial-gradient(ellipse 55% 48% at 50% 36%, rgba(0,0,0,0.22) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(0,0,0,0.12), transparent 22%, transparent 78%, rgba(0,0,0,0.22));
   }
 
   .scene__label {
-    position: absolute; left: 18px; top: 16px; z-index: 5;
-    padding: 8px 12px; border-radius: 8px;
-    background: rgba(0, 8, 20, 0.55); color: rgba(255,255,255,0.88);
+    position: absolute;
+    left: 18px;
+    top: 16px;
+    z-index: 5;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(0, 8, 20, 0.55);
+    color: rgba(255,255,255,0.88);
     font: 600 13px/1.35 system-ui, sans-serif;
     backdrop-filter: blur(8px);
     border: 1px solid rgba(0, 242, 255, 0.25);
     pointer-events: none;
   }
   .scene__label small {
-    display: block; margin-top: 3px; font-weight: 500; font-size: 11px;
-    color: rgba(180, 220, 240, 0.75); letter-spacing: 0.5px;
+    display: block;
+    margin-top: 3px;
+    font-weight: 500;
+    font-size: 11px;
+    color: rgba(180, 220, 240, 0.75);
+    letter-spacing: 0.5px;
   }
 
+  /* Mounted on rear blank wall — leave tanks / aisle / glass visible */
   .tv-stage {
     position: absolute;
-    left: 48%;
-    top: 36%;
-    width: min(62vw, 1040px);
+    left: 50%;
+    top: 34%;
+    width: min(54vw, 920px);
     transform: translate(-50%, -50%);
     z-index: 2;
     overflow: visible;
@@ -57,11 +85,14 @@
   .tv-persp::before {
     content: "";
     position: absolute;
-    left: 8%; right: -4%; top: 10%; bottom: -12%;
-    border-radius: 16px;
-    background: rgba(0,0,0,0.4);
+    left: 10%;
+    right: -6%;
+    top: 12%;
+    bottom: -12%;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.38);
     filter: blur(28px);
-    transform: perspective(1400px) rotateX(3deg) rotateY(4deg) rotateZ(0.4deg) translateZ(-14px);
+    transform: perspective(1500px) rotateX(2.2deg) rotateY(-2.8deg) rotateZ(-0.3deg) translateZ(-8px);
     z-index: -1;
   }
 
@@ -71,100 +102,246 @@
     aspect-ratio: 16 / 9;
     border-radius: 12px;
     overflow: visible;
-    transform-origin: 55% 50%;
-    /* Mild perspective matching workshop wall / mezzanine plane */
-    transform: perspective(1400px) rotateX(3deg) rotateY(4deg) rotateZ(0.4deg);
-    background: linear-gradient(145deg, #2a2d32 0%, #121417 45%, #08090b 100%);
+    transform-style: preserve-3d;
+    transform-origin: 50% 55%;
+    /* Mild wall match — rear panel faces slightly toward camera-left */
+    transform: perspective(1500px) rotateX(2.2deg) rotateY(-2.8deg) rotateZ(-0.3deg);
+    background: linear-gradient(145deg, #2c2e33 0%, #141518 42%, #090a0c 100%);
     box-shadow:
-      0 1px 0 rgba(255,255,255,0.14) inset,
-      0 0 0 1px rgba(0,0,0,0.85),
-      -6px 18px 40px rgba(0,0,0,0.5),
-      0 8px 20px rgba(0,0,0,0.35);
+      0 1px 0 rgba(255,255,255,0.16) inset,
+      0 -1px 0 rgba(0,0,0,0.55) inset,
+      0 0 0 1px rgba(0,0,0,0.8),
+      4px 14px 28px rgba(0,0,0,0.4),
+      2px 6px 12px rgba(0,0,0,0.28),
+      8px 22px 42px rgba(0,0,0,0.16);
   }
 
   .tv__frame {
-    position: absolute; inset: 0; border-radius: 12px; pointer-events: none;
-    background: linear-gradient(180deg, #1e2126 0%, #0b0c0f 100%);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #22252a 0%, #0c0d10 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.1),
+      inset 0 0 0 2px rgba(0,0,0,0.55);
+    pointer-events: none;
   }
 
   .tv__touch-edge {
-    position: absolute; inset: 11px; border-radius: 6px; pointer-events: none;
+    position: absolute;
+    inset: 11px;
+    border-radius: 6px;
+    pointer-events: none;
     box-shadow:
-      0 0 0 1px rgba(90, 200, 255, 0.25),
-      0 0 14px rgba(0, 180, 255, 0.12);
+      0 0 0 1px rgba(90, 200, 255, 0.28),
+      0 0 16px rgba(0, 180, 255, 0.14),
+      inset 0 0 10px rgba(0, 160, 255, 0.06);
   }
 
   .tv__screen {
-    position: absolute; inset: 14px; border-radius: 4px;
-    overflow: hidden; background: #000617;
+    position: absolute;
+    inset: 14px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #000617;
     isolation: isolate;
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,0.92),
+      0 0 28px rgba(0, 160, 255, 0.1);
   }
 
   .tv__viewport {
-    position: absolute; inset: 0; overflow: hidden; background: #000617;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: #000617;
   }
 
   .tv__viewport iframe {
-    position: absolute; top: 0; left: 0;
-    width: 1920px; height: 1080px; border: 0; display: block;
-    background: #000617; transform-origin: 0 0;
-    backface-visibility: hidden; will-change: transform;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    border: 0;
+    display: block;
+    background: #000617;
+    transform-origin: 0 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
   }
 
   .tv__glass {
-    position: absolute; inset: 0; pointer-events: none; border-radius: 4px;
-    background: linear-gradient(115deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 12%, transparent 30%);
-    opacity: 0.5;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: 4px;
+    background: linear-gradient(
+      115deg,
+      rgba(255,255,255,0.1) 0%,
+      rgba(255,255,255,0.03) 12%,
+      transparent 28%,
+      transparent 100%
+    );
+    opacity: 0.55;
   }
 
   .tv__home {
-    position: absolute; left: 50%; bottom: 2px; width: 40px; height: 3px;
-    border-radius: 999px; transform: translateX(-50%);
-    background: rgba(255,255,255,0.28); pointer-events: none;
+    position: absolute;
+    left: 50%;
+    bottom: 1px;
+    width: 42px;
+    height: 3px;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.28);
+    pointer-events: none;
   }
+
   .tv__led {
-    position: absolute; right: 14px; bottom: 3px; width: 5px; height: 5px;
-    border-radius: 50%; background: #3cf07a;
-    box-shadow: 0 0 7px rgba(60, 240, 122, 0.9); pointer-events: none;
+    position: absolute;
+    right: 14px;
+    bottom: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #3cf07a;
+    box-shadow: 0 0 7px rgba(60, 240, 122, 0.9);
+    pointer-events: none;
   }
+
   .tv__badge {
-    position: absolute; left: 12px; bottom: 2px;
-    font: 600 7px/1 system-ui, sans-serif; letter-spacing: 1px;
-    color: rgba(255,255,255,0.28); text-transform: uppercase; pointer-events: none;
+    position: absolute;
+    left: 12px;
+    bottom: 1px;
+    font: 600 7px/1 system-ui, sans-serif;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.28);
+    pointer-events: none;
+    text-transform: uppercase;
   }
 
   .tv__stylus {
-    position: absolute; right: -10px; top: 22%; width: 12px; height: 48%;
-    z-index: 8; pointer-events: none;
-    filter: drop-shadow(2px 4px 5px rgba(0,0,0,0.5));
+    position: absolute;
+    right: -11px;
+    top: 20%;
+    width: 14px;
+    height: 52%;
+    z-index: 20;
+    pointer-events: none;
+    filter: drop-shadow(3px 5px 6px rgba(0,0,0,0.5));
   }
+
+  .tv__stylus-dock {
+    position: absolute;
+    left: 0;
+    top: 4%;
+    bottom: 4%;
+    width: 5px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #0a0b0d, #2a2e34);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.1),
+      -2px 0 6px rgba(0,0,0,0.35);
+  }
+
   .tv__stylus-body {
-    position: absolute; left: 2px; top: 8%; bottom: 10%; width: 9px; border-radius: 999px;
-    background: linear-gradient(90deg, #15171a, #4a4f58 25%, #d5d8de 50%, #2a2e34 100%);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    position: absolute;
+    left: 3px;
+    top: 7%;
+    bottom: 9%;
+    width: 10px;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg,
+        #15171a 0%,
+        #4a4f58 22%,
+        #d5d8de 48%,
+        #9499a3 62%,
+        #2e3238 88%,
+        #0e1012 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.22),
+      inset -2px 0 4px rgba(0,0,0,0.4);
   }
+
+  .tv__stylus-body::before {
+    content: "";
+    position: absolute;
+    left: 22%;
+    top: 12%;
+    bottom: 16%;
+    width: 22%;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0.04));
+  }
+
+  .tv__stylus-ring {
+    position: absolute;
+    left: 2px;
+    width: 12px;
+    top: 36%;
+    height: 6%;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #6a7180, #2a2e36 60%, #12151a);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+
   .tv__stylus-tip {
-    position: absolute; left: 50%; top: 0; width: 5px; height: 10%;
-    transform: translateX(-50%); border-radius: 50% 50% 2px 2px;
-    background: linear-gradient(180deg, #e8eaee, #6a7078);
+    position: absolute;
+    left: 5px;
+    top: 0;
+    width: 6px;
+    height: 9%;
+    border-radius: 50% 50% 2px 2px / 60% 60% 10% 10%;
+    background: linear-gradient(180deg, #f0f2f5 0%, #a8aeb8 50%, #5c626c 100%);
+    box-shadow: inset 0 -1px 1px rgba(0,0,0,0.4);
   }
+
   .tv__stylus-cap {
-    position: absolute; left: 50%; bottom: 0; width: 7px; height: 11%;
-    transform: translateX(-50%); border-radius: 2px 2px 4px 4px;
-    background: linear-gradient(180deg, #3a3f48, #15181c);
+    position: absolute;
+    left: 4px;
+    bottom: 0;
+    width: 8px;
+    height: 10%;
+    border-radius: 2px 2px 5px 5px;
+    background: linear-gradient(180deg, #3e4450, #12151a);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+
+  .tv__stylus-magnet {
+    position: absolute;
+    left: 0;
+    top: 44%;
+    width: 4px;
+    height: 12%;
+    border-radius: 1px;
+    background: linear-gradient(90deg, #3d8ec4, #8ad4ff 55%, #2f6a96);
+    box-shadow: 0 0 8px rgba(120, 200, 255, 0.65);
   }
 
   .hint {
-    position: absolute; right: 16px; bottom: 14px; z-index: 5;
-    padding: 6px 10px; border-radius: 8px;
-    background: rgba(0,0,0,0.5); color: rgba(255,255,255,0.8);
-    font: 12px/1.3 system-ui, sans-serif; pointer-events: none;
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    z-index: 5;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.45);
+    color: rgba(255,255,255,0.78);
+    font: 12px/1.3 system-ui, sans-serif;
+    backdrop-filter: blur(6px);
+    pointer-events: none;
   }
 
   @media (max-width: 900px) {
-    .tv-stage { width: min(78vw, 820px); top: 34%; }
-    .scene__label { font-size: 12px; }
+    .tv-stage { width: min(72vw, 780px); top: 32%; }
+    .hint { display: none; }
+  }
+
+  @media (max-width: 640px) {
+    .tv-stage { width: 88vw; top: 30%; }
   }
 </style>
 </head>
@@ -175,12 +352,12 @@
 
     <div class="scene__label">
       合肥乾锐科技 · 预溶车间
-      <small>现场工业大屏 · 实时 DCS 孪生</small>
+      <small>墙上触控电视 · 实时 DCS 孪生</small>
     </div>
 
     <div class="tv-stage">
       <div class="tv-persp">
-        <div class="tv" aria-label="预溶车间触控大屏">
+        <div class="tv" aria-label="预溶车间触控电视">
           <div class="tv__frame" aria-hidden="true"></div>
           <div class="tv__touch-edge" aria-hidden="true"></div>
           <div class="tv__screen">
@@ -198,26 +375,32 @@
           <span class="tv__home" aria-hidden="true"></span>
           <span class="tv__led" aria-hidden="true"></span>
           <span class="tv__badge" aria-hidden="true">Touch</span>
-          <div class="tv__stylus" aria-hidden="true">
+          <div class="tv__stylus-dock" aria-hidden="true"></div>
+          <div class="tv__stylus" aria-hidden="true" title="磁吸触控笔">
             <span class="tv__stylus-tip"></span>
             <span class="tv__stylus-body"></span>
+            <span class="tv__stylus-ring"></span>
+            <span class="tv__stylus-magnet"></span>
             <span class="tv__stylus-cap"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="hint">预溶车间现场大屏 · 仅展示预溶业务</div>
+    <div class="hint">触控电视 · 挂墙于预溶车间后墙 · 仅展示预溶业务</div>
   </div>
 
 <script>
 (function () {
-  var DESIGN_W = 1920, DESIGN_H = 1080;
+  var DESIGN_W = 1920;
+  var DESIGN_H = 1080;
   var viewport = document.getElementById("tv-viewport");
   var iframe = document.getElementById("tv-iframe");
   var lastKey = "";
+
   function fit() {
-    var w = viewport.clientWidth, h = viewport.clientHeight;
+    var w = viewport.clientWidth;
+    var h = viewport.clientHeight;
     if (!w || !h) return;
     var scale = Math.max(w / DESIGN_W, h / DESIGN_H);
     var left = (w - DESIGN_W * scale) / 2;
@@ -229,9 +412,12 @@
     iframe.style.left = "0";
     iframe.style.top = "0";
   }
+
   fit();
   window.addEventListener("resize", fit);
-  if (window.ResizeObserver) new ResizeObserver(fit).observe(viewport);
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () { fit(); }).observe(viewport);
+  }
   iframe.addEventListener("load", fit);
 })();
 </script>
