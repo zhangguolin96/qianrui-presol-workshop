@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>乾锐科技 · 预溶车间驾驶舱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+
+:root {
+  --bg-base: #000617;
+  --bg-deep: #00040f;
+  --bg-panel: rgba(0, 10, 28, 0.88);
+  --bg-panel-strong: rgba(0, 12, 32, 0.94);
+  --bg-inset: rgba(0, 8, 22, 0.7);
+  --bg-hover: rgba(0, 212, 230, 0.07);
+  --border: rgba(0, 198, 232, 0.18);
+  --border-strong: rgba(0, 212, 230, 0.35);
+  --glass-blur: blur(12px) saturate(1.25);
+  --glass-border: linear-gradient(135deg, rgba(0, 242, 255, 0.65), rgba(176, 38, 255, 0.45));
+  --float-shadow: 0 8px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --neon-glow: 0 0 14px rgba(0, 242, 255, 0.35), 0 0 28px rgba(176, 38, 255, 0.1), inset 0 0 0 1px rgba(0, 242, 255, 0.08);
+  --neon-border: linear-gradient(135deg, rgba(0, 242, 255, 0.78), rgba(176, 38, 255, 0.55));
+  --cyan: #00f2ff;
+  --cyan-alt: #4afbff;
+  --cyan-soft: rgba(0, 242, 255, 0.12);
+  --magenta: #d18bff;
+  --violet: #bc67ff;
+  --warn: #ffb726;
+  --warn-soft: rgba(255, 183, 38, 0.14);
+  --danger: #ff3c48;
+  --danger-soft: rgba(255, 60, 72, 0.14);
+  --success: #22d36e;
+  --success-soft: rgba(34, 211, 110, 0.12);
+  --pending: #8aa3b8;
+  --text-primary: #e6f4fb;
+  --text-secondary: #8eb4c8;
+  --text-muted: #5a7c90;
+  --radius: 10px;
+  --gap: 10px;
+  --header-h: 76px;
+  --font-base: 15px;
+  --font-mono: "JetBrains Mono", "DIN Alternate", Consolas, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-base);
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+#starfield, #particles {
+  position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+}
+.bg-blur-layer {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0, 100, 160, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(120, 40, 180, 0.14), transparent 50%),
+    linear-gradient(180deg, #00040f 0%, #000617 40%, #00030c 100%);
+}
+.bg-blur-layer::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 20%, transparent 75%);
+  animation: hud-scan 12s linear infinite;
+}
+@keyframes hud-scan {
+  0% { opacity: 0.45; } 50% { opacity: 0.7; } 100% { opacity: 0.45; }
+}
+.scene-crosshair {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.22;
+}
+.scene-crosshair__h, .scene-crosshair__v {
+  position: absolute; background: rgba(0, 242, 255, 0.25);
+}
+.scene-crosshair__h { left: 8%; right: 8%; top: 50%; height: 1px; }
+.scene-crosshair__v { top: 12%; bottom: 12%; left: 50%; width: 1px; }
+.scene-crosshair__ring {
+  position: absolute; left: 50%; top: 50%; width: 220px; height: 220px;
+  margin: -110px 0 0 -110px; border-radius: 50%;
+  border: 1px dashed rgba(176, 38, 255, 0.35);
+}
+
+.dashboard {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  width: 100vw; height: 100vh; min-height: 0;
+  padding: 0 12px 12px;
+}
+.dashboard-header {
+  position: relative; flex: 0 0 var(--header-h);
+  display: flex; align-items: center; justify-content: space-between;
+  background: #00050A; border-radius: 0 0 12px 12px;
+  padding: 0 18px; margin-bottom: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+.dashboard-header__glow-line {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #a855f7 20%, #00f2ff 50%, #a855f7 80%, transparent);
+  box-shadow: 0 0 12px rgba(0, 242, 255, 0.55);
+}
+.dashboard-header__brackets {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.dashboard-header__bracket {
+  position: absolute; top: 22px; width: 38%; height: 32px; opacity: 0.75;
+}
+.dashboard-header__bracket--left { left: 0; }
+.dashboard-header__bracket--right { right: 0; transform: scaleX(-1); }
+.dashboard-header__bracket svg { width: 100%; height: 100%; stroke: #00f2ff; fill: none; stroke-width: 1.2; opacity: 0.65; }
+.dashboard-header__side { display: flex; align-items: center; gap: 10px; z-index: 2; min-width: 260px; }
+.dashboard-header__side--left { justify-content: flex-start; }
+.dashboard-header__side--right { justify-content: flex-end; }
+.dashboard-header__center {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  text-align: center; z-index: 2; white-space: nowrap;
+}
+.dashboard-header__title {
+  font-size: 22px; font-weight: 700; letter-spacing: 2px;
+  background: linear-gradient(90deg, #4afbff, #e6f4fb 45%, #d18bff);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 0 24px rgba(0, 242, 255, 0.25);
+}
+.dashboard-header__subtitle {
+  margin-top: 2px; font-size: 11px; color: var(--text-secondary); letter-spacing: 3px;
+}
+.header-kpis { display: flex; gap: 8px; flex-wrap: wrap; }
+.header-kpi {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(0, 242, 255, 0.08);
+  border: 1px solid rgba(0, 242, 255, 0.28);
+  font-size: 11px;
+}
+.header-kpi--danger {
+  background: var(--danger-soft); border-color: rgba(255, 60, 72, 0.45);
+}
+.header-kpi__label { color: var(--text-muted); }
+.header-kpi__value { color: var(--cyan); font-weight: 700; font-size: 13px; }
+.header-kpi--danger .header-kpi__value { color: var(--danger); }
+.header-kpi__unit { color: var(--text-secondary); font-size: 10px; }
+.btn--header-refresh {
+  padding: 6px 12px; border-radius: 6px; font-size: 12px;
+  border: 1px solid rgba(0, 242, 255, 0.35);
+  background: rgba(0, 242, 255, 0.08); color: var(--cyan);
+}
+.btn--header-refresh:hover { background: rgba(0, 242, 255, 0.16); }
+.dashboard-header__clock {
+  font-size: 16px; font-weight: 700; color: var(--cyan-alt);
+  min-width: 88px; text-align: right;
+}
+
+.dashboard-main { flex: 1; min-height: 0; display: flex; }
+.dashboard-content {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: 3fr 6fr 3fr;
+  gap: var(--gap);
+}
+.dashboard-col-stack {
+  display: flex; flex-direction: column; gap: var(--gap); min-height: 0; min-width: 0;
+}
+.dashboard-col-stack--center { min-width: 0; }
+
+@keyframes tech-breathe {
+  0%, 100% { box-shadow: var(--float-shadow), 0 0 12px rgba(0, 242, 255, 0.12); }
+  50% { box-shadow: var(--float-shadow), 0 0 22px rgba(0, 242, 255, 0.22); }
+}
+/* TV embed: freeze decorative motion to reduce scaled-iframe flicker */
+html.is-embedded .panel { animation: none !important; }
+html.is-embedded .scroll-list--active .scroll-list__track { animation: none !important; }
+html.is-embedded .panel__header::after { animation: none !important; }
+html.is-embedded .progress-bar__fill { animation: none !important; }
+html.is-embedded .progress-bar__fill::after { animation: none !important; }
+html.is-embedded .twin-live::before { animation: none !important; }
+html.is-embedded .bg-blur-layer::after { animation: none !important; }
+html.is-embedded .rk--danger .rk__tank { animation: none !important; }
+html.is-embedded .dcs-float--alarm { animation: none !important; }
+
+@keyframes data-flow {
+  0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }
+}
+@keyframes glow-flow {
+  0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; }
+}
+@keyframes progress-shimmer {
+  0% { transform: translateX(-120%); } 100% { transform: translateX(220%); }
+}
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0.55; box-shadow: 0 0 6px currentColor; }
+  50% { opacity: 1; box-shadow: 0 0 14px currentColor; }
+}
+@keyframes scroll-vertical {
+  0% { transform: translateY(0); } 100% { transform: translateY(-50%); }
+}
+
+.panel {
+  position: relative; display: flex; flex-direction: column; min-height: 0;
+  background-color: #000a1c;
+  backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  box-shadow: var(--float-shadow), var(--neon-glow);
+  background-image:
+    linear-gradient(180deg, rgba(0, 12, 32, 0.92), rgba(0, 8, 24, 0.96)),
+    var(--neon-border);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: tech-breathe 6s ease-in-out infinite;
+  overflow: hidden;
+}
+.panel::before, .panel::after {
+  content: ""; position: absolute; width: 18px; height: 18px; z-index: 3; pointer-events: none;
+}
+.panel::before {
+  top: 0; left: 0;
+  border-top: 2px solid rgba(0, 242, 255, 0.9);
+  border-left: 2px solid rgba(0, 242, 255, 0.9);
+}
+.panel::after {
+  right: 0; bottom: 0;
+  border-bottom: 2px solid rgba(176, 38, 255, 0.75);
+  border-right: 2px solid rgba(176, 38, 255, 0.75);
+}
+.panel--compact { flex: 0 0 auto; }
+.panel--grow { flex: 1; }
+.panel--secondary { opacity: 0.98; }
+.panel__header {
+  position: relative; display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px 8px; flex: 0 0 auto; z-index: 2;
+  border-bottom: 1px solid rgba(0, 198, 232, 0.12);
+  overflow: hidden;
+}
+.panel__header::after {
+  content: ""; position: absolute; top: 0; left: 0; width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.08), transparent);
+  animation: data-flow 4.5s linear infinite; pointer-events: none;
+}
+.panel__title {
+  position: relative; font-size: 16px; font-weight: 700; color: var(--cyan);
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.35); padding-left: 14px;
+}
+.panel__title::before {
+  content: ""; position: absolute; left: 0; top: 50%; width: 6px; height: 6px;
+  margin-top: -3px; border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+.panel__title--violet { color: var(--violet); text-shadow: 0 0 10px rgba(188, 103, 255, 0.4); }
+.panel__title--violet::before { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+.panel__meta { font-size: 11px; color: var(--text-muted); }
+.panel__body {
+  position: relative; flex: 1; min-height: 0; overflow: hidden;
+  padding: 10px 12px 12px; z-index: 1;
+}
+.panel--particle-decor .panel__body { isolation: isolate; }
+.panel-glow-particles {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.55;
+}
+.panel-glow-particles canvas { width: 100%; height: 100%; display: block; }
+
+.metric-strip--inline {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  flex: 0 0 auto;
+}
+.metric-card {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px; min-height: 78px;
+  background: linear-gradient(145deg, rgba(0, 16, 36, 0.95), rgba(0, 8, 22, 0.9));
+  border: 1px solid rgba(0, 242, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.metric-card--violet { border-color: rgba(188, 103, 255, 0.28); }
+.metric-card__info { min-width: 0; flex: 1; }
+.metric-card__label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+.metric-card__value {
+  font-size: 20px; font-weight: 700; color: var(--text-primary); line-height: 1.1;
+}
+.metric-card__value span { font-size: 11px; color: var(--text-muted); margin-left: 2px; font-weight: 500; }
+.metric-card__sub { margin-top: 3px; font-size: 10px; color: var(--text-muted); }
+.ring-gauge { position: relative; width: 64px; height: 64px; flex: 0 0 64px; }
+.ring-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-gauge__icon {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 14px; color: var(--cyan); text-shadow: 0 0 8px rgba(0,242,255,0.5);
+}
+.ring-gauge--violet .ring-gauge__icon { color: var(--violet); text-shadow: 0 0 8px rgba(188,103,255,0.5); }
+
+.status-badge, .urgency-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 999px; font-size: 10px; white-space: nowrap;
+}
+.status-badge__dot {
+  width: 5px; height: 5px; border-radius: 50%; background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+.status-badge--pending { color: var(--pending); background: rgba(138,163,184,0.12); }
+.status-badge--running { color: var(--cyan); background: var(--cyan-soft); }
+.status-badge--done { color: var(--success); background: var(--success-soft); }
+.status-badge--warn { color: var(--warn); background: var(--warn-soft); }
+.status-badge--danger { color: var(--danger); background: var(--danger-soft); }
+.status-badge--normal { color: var(--success); background: var(--success-soft); }
+.urgency-badge--normal { color: var(--pending); background: rgba(138,163,184,0.12); }
+.urgency-badge--urgent { color: var(--warn); background: var(--warn-soft); }
+.urgency-badge--critical { color: var(--danger); background: var(--danger-soft); }
+
+.exc-section { margin-bottom: 8px; }
+.exc-section__head {
+  font-size: 11px; color: var(--text-secondary); margin: 4px 0 6px;
+  padding-left: 6px; border-left: 2px solid var(--cyan);
+}
+.exc-section__head--danger { border-left-color: var(--danger); color: #ff8a92; }
+.exc-detail-row {
+  padding: 8px 9px; margin-bottom: 6px; border-radius: 8px;
+  background: var(--bg-inset); border: 1px solid rgba(0, 198, 232, 0.12);
+  cursor: pointer; transition: background 0.2s, border-color 0.2s;
+}
+.exc-detail-row:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.exc-detail-row__top {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 5px;
+}
+.exc-detail-row__id { font-size: 11px; color: var(--cyan-alt); font-weight: 600; }
+.exc-detail-row__grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-size: 11px; color: var(--text-secondary);
+}
+.exc-detail-row__grid em { font-style: normal; color: var(--text-muted); margin-right: 4px; }
+.exc-detail-row__overdue { color: var(--danger); font-weight: 700; }
+
+.quality-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;
+}
+.q-kpi {
+  padding: 8px 10px; border-radius: 8px; background: var(--bg-inset);
+  border: 1px solid rgba(0, 198, 232, 0.14);
+}
+.q-kpi__label { font-size: 10px; color: var(--text-muted); }
+.q-kpi__value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+.q-kpi__value span { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+.q-kpi__value--ok { color: var(--success); }
+.q-kpi__value--warn { color: var(--warn); }
+.q-kpi__value--danger { color: var(--danger); }
+
+.progress-card {
+  padding: 9px 10px; margin-bottom: 7px; border-radius: 8px;
+  background: var(--bg-inset); border: 1px solid rgba(0, 198, 232, 0.14);
+  cursor: pointer;
+}
+.progress-card:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+.progress-card__top {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;
+}
+.progress-card__pct { font-size: 13px; font-weight: 700; color: var(--cyan); }
+.progress-card--violet .progress-card__pct { color: var(--violet); }
+.progress-card__inline {
+  font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.progress-card__inline b { color: var(--text-primary); font-weight: 600; }
+.progress-bar {
+  position: relative; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden;
+}
+.progress-bar__fill {
+  position: relative; height: 100%; border-radius: inherit; width: 0;
+  background: linear-gradient(90deg, #00c6e8, #00f2ff, #bc67ff, #00f2ff);
+  background-size: 200% 100%;
+  animation: glow-flow 2.8s linear infinite;
+  box-shadow: 0 0 10px rgba(0, 242, 255, 0.45);
+}
+.progress-bar__fill::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+  animation: progress-shimmer 1.8s linear infinite;
+}
+.progress-bar__fill--idle {
+  animation: none; background: linear-gradient(90deg, #3a5060, #5a7c90);
+  box-shadow: none;
+}
+.progress-bar__fill--idle::after { display: none; }
+.progress-bar__fill--warn {
+  background: linear-gradient(90deg, #ffb726, #ff8a00);
+  animation: none;
+}
+
+.cap-summary {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px;
+}
+.cycle-tier-box {
+  text-align: center; padding: 8px 4px; border-radius: 8px;
+  background: var(--bg-inset); border: 1px solid rgba(0, 198, 232, 0.14);
+}
+.cycle-tier-box--violet { border-color: rgba(188, 103, 255, 0.3); }
+.cycle-tier-box--gold { border-color: rgba(255, 183, 38, 0.3); }
+.cycle-tier-box--cyan { border-color: rgba(0, 242, 255, 0.3); }
+.cycle-tier-box__count {
+  font-size: 18px; font-weight: 700; line-height: 1.1;
+}
+.cycle-tier-box__count--violet { color: var(--violet); }
+.cycle-tier-box__count--gold { color: var(--warn); }
+.cycle-tier-box__count--cyan { color: var(--cyan); }
+.cycle-tier-box__label { margin-top: 2px; font-size: 10px; color: var(--text-muted); }
+
+.env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.env-mini-card {
+  position: relative; padding: 8px 9px; border-radius: 8px;
+  background: var(--bg-inset); border: 1px solid rgba(0, 198, 232, 0.14);
+}
+.env-mini-card--alert {
+  border-color: rgba(255, 60, 72, 0.45); background: rgba(255, 60, 72, 0.08);
+}
+.env-mini-card__tag {
+  position: absolute; top: 6px; right: 6px;
+  font-size: 9px; padding: 1px 5px; border-radius: 999px;
+  color: var(--danger); background: var(--danger-soft);
+}
+.env-mini-card__name { font-size: 11px; color: var(--text-secondary); padding-right: 28px; }
+.env-mini-card__value { font-size: 16px; font-weight: 700; margin-top: 3px; color: var(--text-primary); }
+.env-mini-card__value-unit { font-size: 10px; color: var(--text-muted); margin-left: 2px; font-weight: 500; }
+.env-mini-card__range { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+.scroll-list { height: 100%; min-height: 0; overflow: hidden; }
+.scroll-list__track { will-change: transform; }
+.scroll-list--active .scroll-list__track {
+  animation: scroll-vertical var(--scroll-duration, 28s) linear infinite;
+}
+.scroll-list--active:hover .scroll-list__track { animation-play-state: paused; }
+
+/* —— 数字孪生 —— */
+.twin-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px; flex-wrap: wrap; z-index: 2;
+}
+.twin-legend { display: flex; gap: 10px; font-size: 10px; color: var(--text-muted); }
+.legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.legend-item__dot { width: 7px; height: 7px; border-radius: 50%; }
+.legend-item__dot--safe { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.legend-item__dot--warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+.legend-item__dot--danger { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.legend-item__dot--idle { background: var(--pending); }
+
+.twin-stage {
+  position: relative; flex: 1; min-height: 0;
+  border-radius: 10px; overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 20%, rgba(0, 90, 140, 0.22), transparent 55%),
+    linear-gradient(180deg, #020b18 0%, #00050f 100%);
+  border: 1px solid rgba(0, 198, 232, 0.18);
+}
+.twin-view {
+  position: absolute; inset: 0; display: flex; flex-direction: column; min-height: 0;
+}
+.twin-hud {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  padding: 8px 10px 0; flex: 0 0 auto; z-index: 3;
+}
+.twin-hud__cell {
+  padding: 6px 8px; border-radius: 8px;
+  background: rgba(0, 12, 28, 0.72); border: 1px solid rgba(0, 198, 232, 0.18);
+}
+.twin-hud__cell em {
+  display: block; font-style: normal; font-size: 10px; color: var(--text-muted); margin-bottom: 2px;
+}
+.twin-hud__cell b { font-size: 14px; color: var(--cyan-alt); font-weight: 700; }
+.twin-hud__cell b span { font-size: 10px; color: var(--text-muted); font-weight: 500; margin-left: 2px; }
+.twin-hud__cell--warn b { color: var(--warn); }
+.twin-hud__cell--danger b { color: var(--danger); }
+.twin-canvas {
+  position: relative; flex: 1; min-height: 0; margin: 6px 10px 0;
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid rgba(0, 198, 232, 0.14);
+  background:
+    linear-gradient(180deg, rgba(0, 30, 55, 0.35), rgba(0, 8, 20, 0.5)),
+    repeating-linear-gradient(90deg, rgba(0,242,255,0.04) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(0deg, rgba(0,242,255,0.04) 0 1px, transparent 1px 40px);
+}
+.twin-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 12px 8px; font-size: 10px; color: var(--text-muted); z-index: 3;
+}
+.twin-foot strong { color: var(--cyan); }
+.twin-live {
+  display: inline-flex; align-items: center; gap: 5px; color: var(--success);
+}
+.twin-live::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+  box-shadow: 0 0 8px var(--success); animation: neon-pulse 1.2s ease-in-out infinite;
+}
+
+/* DCS 悬浮读数牌 */
+.dcs-float {
+  position: absolute; z-index: 5; min-width: 86px;
+  padding: 5px 7px; border-radius: 6px;
+  background: rgba(0, 8, 20, 0.88); border: 1px solid rgba(0, 242, 255, 0.4);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45), 0 0 12px rgba(0,242,255,0.15);
+  font-size: 9px; color: var(--text-secondary); pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+.dcs-float--warn { border-color: rgba(255,183,38,0.65); box-shadow: 0 0 12px rgba(255,183,38,0.25); }
+.dcs-float--alarm {
+  border-color: rgba(255,60,72,0.75);
+  box-shadow: 0 0 14px rgba(255,60,72,0.35);
+  animation: neon-pulse 1.3s ease-in-out infinite; color: #ffb0b5;
+}
+.dcs-float__id { font-weight: 700; color: var(--cyan-alt); margin-bottom: 2px; font-size: 10px; }
+.dcs-float__row { display: flex; justify-content: space-between; gap: 6px; line-height: 1.35; }
+.dcs-float__row em { font-style: normal; color: var(--text-muted); }
+.dcs-float__row b { color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+.dcs-float--warn .dcs-float__row b,
+.dcs-float--alarm .dcs-float__row b { color: inherit; }
+.dcs-float__stage {
+  margin-top: 2px; padding-top: 2px; border-top: 1px solid rgba(0,198,232,0.15);
+  color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px;
+}
+
+/* DCS 风格反应釜（夹套釜 + 绿字读数） */
+.kettle-board {
+  position: absolute; inset: 2px 4px 4px; z-index: 2;
+  display: flex; flex-direction: column; gap: 2px; min-height: 0;
+  background: radial-gradient(ellipse 80% 55% at 50% 60%, rgba(40, 55, 30, 0.28), transparent 70%);
+}
+.kettle-board__row {
+  flex: 1; min-height: 0;
+  display: flex; align-items: stretch; justify-content: space-evenly; gap: 4px;
+}
+
+.rk {
+  position: relative; width: 100%; height: 100%; max-width: none;
+  cursor: pointer; transition: transform 0.2s ease, filter 0.2s;
+  flex: 1 1 0; min-width: 0; min-height: 0;
+}
+.kettle-board__row .rk--lg { flex: 1.15 1 0; }
+.rk:hover { transform: translateY(-3px); z-index: 8; filter: brightness(1.08); }
+.rk--selected { z-index: 8; filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.45)); }
+.rk--warn { filter: drop-shadow(0 0 8px rgba(255, 183, 38, 0.45)); }
+.rk--danger { filter: drop-shadow(0 0 10px rgba(255, 60, 72, 0.55)); }
+.rk--danger .rk__tank { animation: neon-pulse 1.4s ease-in-out infinite; }
+.rk--idle { opacity: 0.78; }
+
+/* 简化立式釜：一体罐身 + 顶部电机块 */
+.rk__tank {
+  position: absolute; left: 50%; top: 6%; bottom: 8%;
+  transform: translateX(-50%);
+  width: 54%; max-width: 120px; min-width: 76px; z-index: 2;
+}
+.rk--lg .rk__tank { width: 60%; max-width: 134px; }
+.rk--sm .rk__tank { width: 52%; max-width: 110px; }
+
+.rk__motor {
+  position: absolute; left: 50%; top: -6%; transform: translateX(-50%);
+  width: 36%; height: 10%; min-height: 10px; z-index: 3;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #d0d6dc, #7a848e);
+  border: 1px solid #5a6570;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.rk__motor::after {
+  content: ""; position: absolute; left: 50%; top: 100%; transform: translateX(-50%);
+  width: 18%; height: 6px;
+  background: #9aa3ad;
+}
+.rk--running .rk__motor { box-shadow: 0 0 8px rgba(80, 220, 120, 0.35); }
+
+.rk__body {
+  position: absolute; left: 0; right: 0; top: 8%; bottom: 8%;
+  border-radius: 48% / 18%;
+  background: linear-gradient(90deg, #6a747e 0%, #c5ced6 28%, #f0f3f6 48%, #a8b2bc 72%, #5a6570 100%);
+  border: 1px solid #5a6570;
+  box-shadow: inset 3px 0 8px rgba(255,255,255,0.25), inset -3px 0 8px rgba(0,0,0,0.22), 0 6px 12px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+.rk__legs {
+  position: absolute; left: 18%; right: 18%; bottom: 0; height: 8%; z-index: 1;
+  display: flex; justify-content: space-between;
+}
+.rk__legs span {
+  width: 10%; height: 100%;
+  background: #7a848e; border-radius: 1px;
+}
+
+.rk__name {
+  position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%);
+  z-index: 6; white-space: nowrap; text-align: center;
+  font-size: clamp(10px, 1.05vw, 13px); font-weight: 800; color: #1a222a;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  pointer-events: none;
+}
+
+.rk__readouts {
+  position: absolute; left: 50%; top: 42%; transform: translateX(-50%);
+  z-index: 6; display: flex; flex-direction: column; gap: 3px;
+  width: 78%;
+}
+.rk__ro {
+  display: flex; align-items: center; justify-content: flex-end; gap: 3px;
+  height: clamp(13px, 2.1vh, 18px); padding: 0 5px 0 3px;
+  background: #0a0a0a; border: 1px solid #222; border-radius: 2px;
+  font-family: var(--font-mono); font-size: clamp(10px, 0.95vw, 13px); line-height: 1;
+  color: #39ff6a; text-shadow: 0 0 4px rgba(57, 255, 106, 0.45);
+}
+.rk__ro--alarm { color: #ff4d57; border-color: #5a2024; }
+.rk__ro--warn { color: #ffd24a; border-color: #5a4a20; }
+.rk__ro b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rk__ro span { opacity: 0.85; font-size: 9px; }
+
+.rk__status {
+  position: absolute; top: 14%; left: 50%;
+  transform: translate(48%, 0); z-index: 7;
+  font-size: 12px; font-weight: 700; line-height: 1.2;
+  padding: 3px 9px; border-radius: 999px;
+  background: rgba(0, 8, 18, 0.88); border: 1px solid currentColor;
+  color: var(--cyan); white-space: nowrap;
+}
+.rk--lg .rk__status { font-size: 13px; padding: 4px 10px; }
+.rk--warn .rk__status { color: var(--warn); }
+.rk--danger .rk__status { color: var(--danger); }
+.rk--idle .rk__status { color: var(--pending); }
+.rk__cap {
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  z-index: 3; font-size: clamp(9px, 0.8vw, 11px); color: var(--text-muted); white-space: nowrap;
+}
+.twin-hud { padding: 6px 8px 0; }
+.twin-canvas { margin: 4px 8px 0; }
+.twin-foot { padding: 4px 10px 6px; }
+.twin-badge-bar {
+  position: absolute; top: 8px; left: 10px; right: 10px; z-index: 4;
+  display: flex; justify-content: space-between; gap: 8px; pointer-events: none;
+}
+.twin-title-block { font-size: 12px; color: var(--text-secondary); }
+.twin-title-block strong { color: var(--cyan); font-size: 13px; }
+.twin-title-block small { display: block; margin-top: 2px; font-size: 10px; color: var(--text-muted); }
+.twin-chip-col { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.twin-chip {
+  font-size: 10px; padding: 3px 8px; border-radius: 999px;
+  background: rgba(0, 12, 28, 0.8); border: 1px solid rgba(0, 242, 255, 0.25);
+  color: var(--text-secondary); pointer-events: none;
+}
+.twin-chip strong { color: var(--cyan); margin-left: 4px; }
+.twin-chip--danger { border-color: rgba(255,60,72,0.45); color: #ff8a92; }
+.twin-chip--danger strong { color: var(--danger); }
+
+
+
+.detail-overlay {
+  position: fixed; inset: 0; z-index: 50; display: none;
+  background: rgba(0, 4, 12, 0.55); backdrop-filter: blur(3px);
+}
+.detail-overlay--open { display: block; }
+.detail-drawer {
+  position: absolute; top: 0; right: 0; width: min(440px, 92vw); height: 100%;
+  background: linear-gradient(180deg, #000c1e, #000610);
+  border-left: 1px solid rgba(0, 242, 255, 0.3);
+  box-shadow: -12px 0 40px rgba(0,0,0,0.55);
+  display: flex; flex-direction: column;
+  animation: drawer-in 0.28s ease;
+}
+@keyframes drawer-in {
+  from { transform: translateX(24px); opacity: 0.6; } to { transform: none; opacity: 1; }
+}
+.detail-drawer__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px; border-bottom: 1px solid rgba(0, 198, 232, 0.18);
+}
+.detail-drawer__title { font-size: 16px; font-weight: 700; color: var(--cyan); }
+.detail-drawer__close {
+  width: 32px; height: 32px; border-radius: 8px; font-size: 20px;
+  border: 1px solid rgba(0, 198, 232, 0.25); color: var(--text-secondary);
+}
+.detail-drawer__close:hover { color: var(--cyan); border-color: var(--cyan); }
+.detail-drawer__body {
+  flex: 1; overflow: auto; padding: 14px 18px 24px; font-size: 12px;
+}
+.dcs-meta {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+}
+.dcs-meta__item {
+  padding: 8px 10px; border-radius: 8px; background: var(--bg-inset);
+  border: 1px solid rgba(0, 198, 232, 0.14);
+}
+.dcs-meta__item em { display: block; font-style: normal; color: var(--text-muted); font-size: 10px; margin-bottom: 2px; }
+.dcs-table { width: 100%; border-collapse: collapse; }
+.dcs-table th, .dcs-table td {
+  padding: 7px 8px; text-align: left; border-bottom: 1px solid rgba(0, 198, 232, 0.1);
+  font-size: 11px;
+}
+.dcs-table th { color: var(--text-muted); font-weight: 500; }
+.dcs-table td { color: var(--text-primary); }
+.dcs-table tr.dcs-row--alarm td { color: var(--danger); }
+.dcs-table tr.dcs-row--warn td { color: var(--warn); }
+.dcs-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+.wave-bg {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 54px; z-index: 0; pointer-events: none; opacity: 0.55;
+}
+.wave-bg svg { width: 100%; height: 100%; display: block; }
+
+@media (max-width: 1400px) {
+  .dashboard-header__title { font-size: 18px; }
+  .metric-card__value { font-size: 17px; }
+  .twin-hud { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .twin-hud__cell b { font-size: 12px; }
+  .rk__tank { min-width: 70px; }
+}
+
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<canvas id="particles"></canvas>
+<div class="bg-blur-layer" aria-hidden="true"></div>
+<div class="scene-crosshair" aria-hidden="true">
+  <div class="scene-crosshair__h"></div>
+  <div class="scene-crosshair__v"></div>
+  <div class="scene-crosshair__ring"></div>
+</div>
+
+<div class="dashboard">
+  <header class="dashboard-header">
+    <div class="dashboard-header__brackets" aria-hidden="true">
+      <div class="dashboard-header__bracket dashboard-header__bracket--left">
+        <svg viewBox="0 0 500 32" preserveAspectRatio="none">
+          <path d="M500 10 L170 10 L152 22 L0 22"/>
+          <path d="M500 17 L195 17 L182 24 L0 24"/>
+        </svg>
+      </div>
+      <div class="dashboard-header__bracket dashboard-header__bracket--right">
+        <svg viewBox="0 0 500 32" preserveAspectRatio="none">
+          <path d="M500 10 L170 10 L152 22 L0 22"/>
+          <path d="M500 17 L195 17 L182 24 L0 24"/>
+        </svg>
+      </div>
+    </div>
+    <div class="dashboard-header__glow-line" aria-hidden="true"></div>
+    <div class="dashboard-header__side dashboard-header__side--left">
+      <div class="header-kpis" id="header-kpis"></div>
+    </div>
+    <div class="dashboard-header__center">
+      <div class="dashboard-header__title">乾锐科技 · 预溶车间驾驶舱</div>
+      <div class="dashboard-header__subtitle">QIANRUI ELECTROLYTE · PRE-DISSOLUTION COCKPIT</div>
+    </div>
+    <div class="dashboard-header__side dashboard-header__side--right">
+      <button class="btn btn--header-refresh" type="button" id="btn-refresh">刷新</button>
+      <div class="dashboard-header__clock" id="live-clock">00:00:00</div>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="dashboard-content">
+      <!-- LEFT -->
+      <div class="dashboard-col-stack dashboard-col-stack--left">
+        <section class="panel panel--grow panel--particle-decor">
+          <div class="panel__header">
+            <span class="panel__title">生产异常</span>
+            <span class="panel__meta" id="exc-meta">待处理 0</span>
+          </div>
+          <div class="panel__body">
+            <div class="panel-glow-particles" aria-hidden="true"><canvas></canvas></div>
+            <div class="scroll-list" id="exc-list"></div>
+          </div>
+        </section>
+        <section class="panel panel--grow panel--secondary">
+          <div class="panel__header">
+            <span class="panel__title">质量监控</span>
+            <span class="panel__meta">水分 / HF · 预溶釜</span>
+          </div>
+          <div class="panel__body">
+            <div class="quality-grid" id="quality-kpis"></div>
+            <div class="scroll-list" id="quality-list" style="height:calc(100% - 88px)"></div>
+            <div class="wave-bg env-wave-chart" aria-hidden="true">
+              <svg viewBox="0 0 400 54" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="wg1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(0,242,255,0.35)"/>
+                    <stop offset="60%" stop-color="rgba(176,38,255,0.12)"/>
+                    <stop offset="100%" stop-color="transparent"/>
+                  </linearGradient>
+                  <filter id="glow"><feGaussianBlur stdDeviation="1.2"/></filter>
+                </defs>
+                <path d="M0 40 C40 28,80 46,120 32 S200 18,240 30 S320 44,400 26 V54 H0Z" fill="url(#wg1)"/>
+                <path d="M0 36 C50 22,90 40,140 28 S220 16,280 34 S360 40,400 24" fill="none" stroke="rgba(188,103,255,0.35)" stroke-width="1"/>
+                <path d="M0 32 C45 20,95 38,145 24 S230 14,290 30 S355 36,400 20" fill="none" stroke="#00f2ff" stroke-width="1.5" filter="url(#glow)"/>
+                <circle cx="290" cy="30" r="2.5" fill="#00f2ff"/>
+              </svg>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- CENTER -->
+      <div class="dashboard-col-stack dashboard-col-stack--center">
+        <div class="metric-strip--inline" id="metric-strip"></div>
+        <section class="panel panel--grow panel--particle-decor">
+          <div class="panel__header">
+            <span class="panel__title">预溶釜数字孪生</span>
+            <span class="panel__meta">R-201 ~ R-207 · DCS 实时点位</span>
+          </div>
+          <div class="panel__body" style="display:flex;flex-direction:column">
+            <div class="panel-glow-particles" aria-hidden="true"><canvas></canvas></div>
+            <div class="twin-toolbar">
+              <div class="twin-legend">
+                <span class="legend-item"><span class="legend-item__dot legend-item__dot--safe"></span>运行</span>
+                <span class="legend-item"><span class="legend-item__dot legend-item__dot--warn"></span>预警</span>
+                <span class="legend-item"><span class="legend-item__dot legend-item__dot--danger"></span>告警</span>
+                <span class="legend-item"><span class="legend-item__dot legend-item__dot--idle"></span>空闲</span>
+              </div>
+            </div>
+            <div class="twin-stage" id="twin-stage"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="dashboard-col-stack dashboard-col-stack--right">
+        <section class="panel panel--grow">
+          <div class="panel__header">
+            <span class="panel__title panel__title--violet">预溶产能进度</span>
+            <span class="panel__meta">工艺窗 4–10℃ · N₂ 保护</span>
+          </div>
+          <div class="panel__body">
+            <div class="cap-summary" id="cap-summary"></div>
+            <div class="scroll-list" id="cap-list" style="height:calc(100% - 72px)"></div>
+            <div class="wave-bg filling-wave-chart" aria-hidden="true">
+              <svg viewBox="0 0 400 54" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(188,103,255,0.35)"/>
+                    <stop offset="70%" stop-color="rgba(0,242,255,0.1)"/>
+                    <stop offset="100%" stop-color="transparent"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0 38 C60 22,100 48,160 30 S260 14,320 34 S380 42,400 28 V54 H0Z" fill="url(#wg2)"/>
+                <path d="M0 34 C55 20,110 42,170 26 S270 12,330 32 S380 38,400 24" fill="none" stroke="#bc67ff" stroke-width="1.5"/>
+              </svg>
+            </div>
+          </div>
+        </section>
+        <section class="panel panel--grow panel--secondary">
+          <div class="panel__header">
+            <span class="panel__title panel__title--violet">DCS 告警</span>
+            <span class="panel__meta" id="alarm-meta">实时</span>
+          </div>
+          <div class="panel__body">
+            <div class="scroll-list" id="alarm-list"></div>
+          </div>
+        </section>
+        <section class="panel panel--compact">
+          <div class="panel__header">
+            <span class="panel__title">工艺环境</span>
+            <span class="panel__meta">预溶车间</span>
+          </div>
+          <div class="panel__body">
+            <div class="env-grid" id="env-grid"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-drawer" id="detail-drawer">
+    <div class="detail-drawer__header">
+      <span class="detail-drawer__title" id="detail-title"></span>
+      <button class="detail-drawer__close" id="detail-close" type="button">×</button>
+    </div>
+    <div class="detail-drawer__body" id="detail-body"></div>
+  </div>
+</div>
+
+<script>
+var IS_EMBEDDED = (function () {
+  try {
+    if (/(?:^|[?&])embed=1(?:&|$)/.test(location.search)) return true;
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+})();
+if (IS_EMBEDDED) document.documentElement.classList.add("is-embedded");
+
+/* ========== 合肥乾锐科技 · 预溶车间 ========== */
+const HEADER_STATS = [
+  { label: "在制釜次", value: "5", unit: "/7" },
+  { label: "低温溶解中", value: "3", unit: "釜" },
+  { label: "今日出料", value: "86", unit: "t" },
+  { label: "未关闭告警", value: "2", unit: "条", danger: true }
+];
+
+const METRICS = [
+  { label: "今日预溶达成", value: "88.6", unit: "%", pct: 88.6, sub: "计划 97 t · 实产 86 t", icon: "◆", theme: "cyan" },
+  { label: "批次一次合格率", value: "97.4", unit: "%", pct: 97.4, sub: "OOS 1 · OOC 1", icon: "▣", theme: "cyan" },
+  { label: "预溶釜利用率", value: "71.4", unit: "%", pct: 71.4, sub: "5 运行 / 1 清洗 / 1 空闲", icon: "◎", theme: "violet" },
+  { label: "计划进度", value: "82.0", unit: "%", pct: 82.0, sub: "本月预溶计划 2.4 kt", icon: "!", theme: "violet" }
+];
+
+const EXEC_EXCEPTIONS = {
+  pending: [
+    { id: "WO-QR-260724-018", type: "feeding", status: "warn", statusLabel: "投料偏差", urgency: "urgent", urgencyLabel: "次紧急",
+      fields: [["配方", "QR-DY-NCM811"], ["工单", "预溶投料"], ["偏差", "VC +0.12%"], ["超时", "1.6h"]], overdue: "1.6h" },
+    { id: "WO-QR-260724-021", type: "batch", status: "danger", statusLabel: "水分超标", urgency: "critical", urgencyLabel: "紧急",
+      fields: [["釜号", "R-205"], ["产品", "动力电解液"], ["H2O", "28 ppm"], ["限值", "≤20 ppm"]], overdue: "0.8h" }
+  ],
+  running: [
+    { id: "WO-QR-260724-009", type: "batch", status: "running", statusLabel: "低温溶解", urgency: "normal", urgencyLabel: "一般",
+      fields: [["釜号", "R-201"], ["阶段", "低温溶解"], ["进度", "68%"], ["ETA", "11:40"]], overdue: null },
+    { id: "WO-QR-260724-011", type: "batch", status: "warn", statusLabel: "N₂微正压低", urgency: "urgent", urgencyLabel: "次紧急",
+      fields: [["釜号", "R-203"], ["压力", "0.8 kPa"], ["设定", "2–5 kPa"], ["阶段", "溶解循环"]], overdue: null },
+    { id: "WO-QR-260724-015", type: "batch", status: "running", statusLabel: "添加剂溶解", urgency: "normal", urgencyLabel: "一般",
+      fields: [["釜号", "R-207"], ["产品", "数码电解液"], ["进度", "44%"], ["ETA", "13:20"]], overdue: null }
+  ]
+};
+
+const QUALITY_KPIS = [
+  { label: "水分合格率", value: "98.4", unit: "%", cls: "warn" },
+  { label: "HF 合格率", value: "99.1", unit: "%", cls: "ok" },
+  { label: "在线水分均值", value: "14.2", unit: "ppm", cls: "ok" },
+  { label: "今日 OOS", value: "1", unit: "批", cls: "danger" }
+];
+
+const QUALITY_ROWS = [
+  { id: "QA-260724-031", status: "danger", statusLabel: "OOS", name: "动力电解液 QR-DY-NCM811", batch: "QR260724B03", item: "H₂O 28ppm / 限 ≤20", kettle: "R-205" },
+  { id: "QA-260724-028", status: "warn", statusLabel: "OOC", name: "动力电解液 QR-DY-LFP", batch: "QR260724A11", item: "HF 趋势偏高 18ppm", kettle: "R-203" },
+  { id: "QA-260724-025", status: "warn", statusLabel: "关注", name: "数码电解液 QR-SM-3C", batch: "QR260724C02", item: "水分 13ppm · 接近上限", kettle: "R-207" },
+  { id: "QA-260724-022", status: "done", statusLabel: "放行", name: "储能电解液 QR-CN-LF", batch: "QR260724A08", item: "HF 8.2ppm / H₂O 11ppm", kettle: "R-206" },
+  { id: "QA-260724-019", status: "done", statusLabel: "放行", name: "动力电解液 QR-DY-NCM523", batch: "QR260724A05", item: "水分/HF 全项合格", kettle: "R-201" },
+  { id: "QA-260724-016", status: "done", statusLabel: "放行", name: "动力电解液 QR-DY-LFP", batch: "QR260724A09", item: "H₂O 14ppm 合格", kettle: "R-202" }
+];
+
+const CAP_SUMMARY = [
+  { count: "86", label: "今日出料 t", theme: "cyan" },
+  { count: "88.6%", label: "日计划达成", theme: "violet" },
+  { count: "1.97", label: "月累预溶 kt", theme: "gold" }
+];
+
+const CAP_LINES = [
+  { name: "动力预溶 · NCM523", code: "R-201", plan: 28, actual: 26, unit: "t", status: "running", theme: "cyan" },
+  { name: "动力预溶 · LFP", code: "R-202/203", plan: 32, actual: 27, unit: "t", status: "warn", theme: "cyan" },
+  { name: "动力预溶 · NCM811", code: "R-205", plan: 18, actual: 12, unit: "t", status: "warn", theme: "violet" },
+  { name: "储能预溶 · LF", code: "R-206", plan: 12, actual: 14, unit: "t", status: "running", theme: "violet" },
+  { name: "数码预溶 · 3C", code: "R-207", plan: 7, actual: 7, unit: "t", status: "running", theme: "violet" }
+];
+
+const ALARMS = [
+  { id: "ALM-TT-205-01", level: "critical", tag: "TT-205", kettle: "R-205", msg: "釜温 12.8℃ 超上限（工艺窗 4–10℃）", time: "09:41:12" },
+  { id: "ALM-AI-205-02", level: "critical", tag: "AI-205-H2O", kettle: "R-205", msg: "在线水分 28ppm，触发 OOS 联锁预告", time: "09:38:05" },
+  { id: "ALM-PT-203-01", level: "urgent", tag: "PT-203", kettle: "R-203", msg: "微正压偏低 0.8 kPa（设定 2–5 kPa N₂）", time: "09:22:48" },
+  { id: "ALM-SI-202-01", level: "normal", tag: "SI-202", kettle: "R-202", msg: "搅拌电流波动，建议点检密封", time: "08:55:17" }
+];
+
+const ENV_POINTS = [
+  { name: "预溶车间露点", value: "-42.6", unit: "℃", range: "≤ -40 ℃", alert: false },
+  { name: "釜区环境温", value: "21.8", unit: "℃", range: "18 – 26 ℃", alert: false },
+  { name: "N₂总管压力", value: "0.42", unit: "MPa", range: "0.35 – 0.55", alert: false },
+  { name: "分子筛出口水", value: "8.6", unit: "ppm", range: "≤ 10 ppm", alert: true }
+];
+
+const KETTLES = [
+  { id: "R-201", size: "sm", capacity: "5 m³", product: "动力 QR-DY-NCM523", batch: "QR260724A05", stage: "低温溶解", progress: 68, level: 72, status: "running", theme: "cyan",
+    points: [
+      { tag: "TT-201", name: "釜内温度", value: 7.2, unit: "℃", lo: 4, hi: 10, state: "normal" },
+      { tag: "PT-201", name: "釜内压力(N₂)", value: 3.1, unit: "kPa", lo: 2, hi: 5, state: "normal" },
+      { tag: "LT-201", name: "液位", value: 72, unit: "%", lo: 10, hi: 90, state: "normal" },
+      { tag: "SI-201", name: "搅拌转速", value: 48, unit: "rpm", lo: 30, hi: 80, state: "normal" },
+      { tag: "AI-201-H2O", name: "在线水分", value: 12, unit: "ppm", lo: 0, hi: 20, state: "normal" },
+      { tag: "AI-201-HF", name: "游离酸(HF)", value: 9.1, unit: "ppm", lo: 0, hi: 50, state: "normal" }
+    ] },
+  { id: "R-202", size: "sm", capacity: "5 m³", product: "动力 QR-DY-LFP", batch: "QR260724A09", stage: "投料完成待搅", progress: 35, level: 55, status: "running", theme: "cyan",
+    points: [
+      { tag: "TT-202", name: "釜内温度", value: 6.5, unit: "℃", lo: 4, hi: 10, state: "normal" },
+      { tag: "PT-202", name: "釜内压力(N₂)", value: 2.8, unit: "kPa", lo: 2, hi: 5, state: "normal" },
+      { tag: "LT-202", name: "液位", value: 55, unit: "%", lo: 10, hi: 90, state: "normal" },
+      { tag: "SI-202", name: "搅拌电流", value: 18.6, unit: "A", lo: 8, hi: 22, state: "warn" },
+      { tag: "AI-202-H2O", name: "在线水分", value: 14, unit: "ppm", lo: 0, hi: 20, state: "normal" },
+      { tag: "AI-202-HF", name: "游离酸(HF)", value: 11.2, unit: "ppm", lo: 0, hi: 50, state: "normal" }
+    ] },
+  { id: "R-203", size: "sm", capacity: "5 m³", product: "动力 QR-DY-LFP", batch: "QR260724A11", stage: "溶解循环", progress: 52, level: 64, status: "warn", theme: "cyan",
+    points: [
+      { tag: "TT-203", name: "釜内温度", value: 8.1, unit: "℃", lo: 4, hi: 10, state: "normal" },
+      { tag: "PT-203", name: "釜内压力(N₂)", value: 0.8, unit: "kPa", lo: 2, hi: 5, state: "warn" },
+      { tag: "LT-203", name: "液位", value: 64, unit: "%", lo: 10, hi: 90, state: "normal" },
+      { tag: "SI-203", name: "搅拌转速", value: 50, unit: "rpm", lo: 30, hi: 80, state: "normal" },
+      { tag: "AI-203-H2O", name: "在线水分", value: 16, unit: "ppm", lo: 0, hi: 20, state: "normal" },
+      { tag: "AI-203-HF", name: "游离酸(HF)", value: 18.0, unit: "ppm", lo: 0, hi: 50, state: "warn" }
+    ] },
+  { id: "R-204", size: "sm", capacity: "5 m³", product: "—", batch: "—", stage: "CIP 清洗", progress: 20, level: 15, status: "idle", theme: "cyan",
+    points: [
+      { tag: "TT-204", name: "釜内温度", value: 24.0, unit: "℃", lo: 4, hi: 35, state: "normal" },
+      { tag: "PT-204", name: "釜内压力(N₂)", value: 1.2, unit: "kPa", lo: 0, hi: 5, state: "normal" },
+      { tag: "LT-204", name: "液位", value: 15, unit: "%", lo: 0, hi: 90, state: "normal" },
+      { tag: "SI-204", name: "搅拌转速", value: 0, unit: "rpm", lo: 0, hi: 80, state: "normal" },
+      { tag: "AI-204-H2O", name: "在线水分", value: "—", unit: "", lo: 0, hi: 20, state: "normal" },
+      { tag: "XS-204-CIP", name: "清洗程序", value: "STEP-3", unit: "", lo: null, hi: null, state: "normal" }
+    ] },
+  { id: "R-205", size: "lg", capacity: "10 m³", product: "动力 QR-DY-NCM811", batch: "QR260724B03", stage: "异常挂起", progress: 81, level: 78, status: "danger", theme: "violet",
+    points: [
+      { tag: "TT-205", name: "釜内温度", value: 12.8, unit: "℃", lo: 4, hi: 10, state: "alarm" },
+      { tag: "PT-205", name: "釜内压力(N₂)", value: 3.4, unit: "kPa", lo: 2, hi: 5, state: "normal" },
+      { tag: "LT-205", name: "液位", value: 78, unit: "%", lo: 10, hi: 90, state: "normal" },
+      { tag: "SI-205", name: "搅拌转速", value: 45, unit: "rpm", lo: 30, hi: 80, state: "normal" },
+      { tag: "AI-205-H2O", name: "在线水分", value: 28, unit: "ppm", lo: 0, hi: 20, state: "alarm" },
+      { tag: "AI-205-HF", name: "游离酸(HF)", value: 22, unit: "ppm", lo: 0, hi: 50, state: "normal" }
+    ] },
+  { id: "R-206", size: "lg", capacity: "10 m³", product: "储能 QR-CN-LF", batch: "QR260724A08", stage: "密闭过滤出料", progress: 90, level: 40, status: "running", theme: "violet",
+    points: [
+      { tag: "TT-206", name: "釜内温度", value: 8.6, unit: "℃", lo: 4, hi: 10, state: "normal" },
+      { tag: "PT-206", name: "釜内压力(N₂)", value: 2.9, unit: "kPa", lo: 2, hi: 5, state: "normal" },
+      { tag: "LT-206", name: "液位", value: 40, unit: "%", lo: 5, hi: 90, state: "normal" },
+      { tag: "FI-206", name: "出料流量", value: 4.2, unit: "m³/h", lo: 0, hi: 8, state: "normal" },
+      { tag: "SI-206", name: "搅拌转速", value: 22, unit: "rpm", lo: 0, hi: 80, state: "normal" },
+      { tag: "AI-206-H2O", name: "在线水分", value: 11, unit: "ppm", lo: 0, hi: 20, state: "normal" }
+    ] },
+  { id: "R-207", size: "lg", capacity: "20 m³", product: "数码 QR-SM-3C", batch: "QR260724C02", stage: "添加剂溶解", progress: 44, level: 58, status: "running", theme: "violet",
+    points: [
+      { tag: "TT-207", name: "釜内温度", value: 5.9, unit: "℃", lo: 4, hi: 10, state: "normal" },
+      { tag: "PT-207", name: "釜内压力(N₂)", value: 3.6, unit: "kPa", lo: 2, hi: 5, state: "normal" },
+      { tag: "LT-207", name: "液位", value: 58, unit: "%", lo: 10, hi: 90, state: "normal" },
+      { tag: "SI-207", name: "搅拌转速", value: 42, unit: "rpm", lo: 25, hi: 70, state: "normal" },
+      { tag: "AI-207-H2O", name: "在线水分", value: 13, unit: "ppm", lo: 0, hi: 20, state: "normal" },
+      { tag: "AI-207-HF", name: "游离酸(HF)", value: 10.5, unit: "ppm", lo: 0, hi: 50, state: "normal" }
+    ] }
+];
+
+let selectedKettle = "R-205";
+let twinLiveTimer = null;
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function statusBadge(status, label) {
+  return '<span class="status-badge status-badge--' + status + '"><span class="status-badge__dot"></span>' + esc(label) + '</span>';
+}
+function urgencyBadge(level, label) {
+  return '<span class="urgency-badge urgency-badge--' + level + '">' + esc(label) + '</span>';
+}
+function headerKpisHtml(stats) {
+  return stats.map(function (s) {
+    return '<span class="header-kpi' + (s.danger ? ' header-kpi--danger' : '') + '">' +
+      '<span class="header-kpi__label">' + esc(s.label) + '</span>' +
+      '<span class="header-kpi__value">' + esc(s.value) + '</span>' +
+      (s.unit ? '<span class="header-kpi__unit">' + esc(s.unit) + '</span>' : '') +
+    '</span>';
+  }).join('');
+}
+function ringGauge(pct, theme, icon) {
+  const r = 26, c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.min(100, Math.max(0, pct)) / 100);
+  const stroke = theme === "violet" ? "#bc67ff" : "#00f2ff";
+  let ticks = "";
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2;
+    const x1 = 32 + Math.cos(a) * 30, y1 = 32 + Math.sin(a) * 30;
+    const x2 = 32 + Math.cos(a) * 32.5, y2 = 32 + Math.sin(a) * 32.5;
+    ticks += '<line x1="' + x1.toFixed(2) + '" y1="' + y1.toFixed(2) + '" x2="' + x2.toFixed(2) + '" y2="' + y2.toFixed(2) + '" stroke="rgba(142,180,200,0.28)" stroke-width="1"/>';
+  }
+  return '<div class="ring-gauge ring-gauge--' + theme + '">' +
+    '<svg viewBox="0 0 64 64">' + ticks +
+    '<circle cx="32" cy="32" r="' + r + '" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>' +
+    '<circle cx="32" cy="32" r="' + r + '" fill="none" stroke="' + stroke + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + c.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '" style="filter:drop-shadow(0 0 4px ' + stroke + ')"/>' +
+    '</svg><div class="ring-gauge__icon">' + icon + '</div></div>';
+}
+function setScrollList(el, html) {
+  if (!el) return;
+  el._scrollHtml = html;
+  el.innerHTML = '<div class="scroll-list__track"><div class="scroll-list__chunk">' + html + '</div></div>';
+  el.classList.remove("scroll-list--active");
+  requestAnimationFrame(function () {
+    const track = el.querySelector(".scroll-list__track");
+    const chunk = el.querySelector(".scroll-list__chunk");
+    if (!track || !chunk) return;
+    if (!IS_EMBEDDED && chunk.scrollHeight > el.clientHeight + 8) {
+      track.innerHTML = '<div class="scroll-list__chunk">' + html + '</div><div class="scroll-list__chunk">' + html + '</div>';
+      const dur = Math.max(18, Math.round(chunk.scrollHeight / 18));
+      el.style.setProperty("--scroll-duration", dur + "s");
+      el.classList.add("scroll-list--active");
+    }
+  });
+}
+function openDetail(title, html) {
+  document.getElementById("detail-title").textContent = title;
+  document.getElementById("detail-body").innerHTML = html;
+  document.getElementById("detail-overlay").classList.add("detail-overlay--open");
+}
+function closeDetail() {
+  document.getElementById("detail-overlay").classList.remove("detail-overlay--open");
+}
+
+function renderExcRow(item) {
+  const fields = item.fields.map(function (f) {
+    const val = f[0] === "超时" && item.overdue
+      ? '<strong class="exc-detail-row__overdue">' + esc(item.overdue) + '</strong>'
+      : esc(f[1]);
+    return '<span><em>' + esc(f[0]) + '</em>' + val + '</span>';
+  }).join("");
+  return '<div class="exc-detail-row" data-type="' + esc(item.type) + '" data-id="' + esc(item.id) + '">' +
+    '<div class="exc-detail-row__top">' +
+      '<div>' + statusBadge(item.status, item.statusLabel) +
+      ' <span class="exc-detail-row__id">' + esc(item.id) + '</span></div>' +
+      urgencyBadge(item.urgency, item.urgencyLabel) +
+    '</div><div class="exc-detail-row__grid">' + fields + '</div></div>';
+}
+
+function renderExc() {
+  const pendingN = EXEC_EXCEPTIONS.pending.length;
+  document.getElementById("exc-meta").textContent = "待处理 " + pendingN;
+  let html = "";
+  if (pendingN) {
+    html += '<div class="exc-section"><div class="exc-section__head exc-section__head--danger">待处理</div>' +
+      EXEC_EXCEPTIONS.pending.map(renderExcRow).join("") + "</div>";
+  }
+  html += '<div class="exc-section"><div class="exc-section__head">执行中</div>' +
+    EXEC_EXCEPTIONS.running.map(renderExcRow).join("") + "</div>";
+  setScrollList(document.getElementById("exc-list"), html);
+  document.getElementById("exc-list").onclick = function (e) {
+    const row = e.target.closest(".exc-detail-row");
+    if (!row) return;
+    const id = row.getAttribute("data-id");
+    const all = EXEC_EXCEPTIONS.pending.concat(EXEC_EXCEPTIONS.running);
+    const item = all.find(function (x) { return x.id === id; });
+    if (!item) return;
+    openDetail(item.id, '<div class="dcs-meta">' +
+      item.fields.map(function (f) {
+        return '<div class="dcs-meta__item"><em>' + esc(f[0]) + '</em><b>' + esc(f[1]) + '</b></div>';
+      }).join("") +
+      '</div><p style="color:var(--text-secondary);line-height:1.6">预溶工艺：溶剂经分子筛脱水 → N₂ 保护下低温（4–10℃）溶解 LiPF₆ / 添加剂 → 密闭过滤出料。异常按 MES 工单闭环。</p>');
+  };
+}
+
+function renderQuality() {
+  document.getElementById("quality-kpis").innerHTML = QUALITY_KPIS.map(function (k) {
+    return '<div class="q-kpi"><div class="q-kpi__label">' + esc(k.label) + '</div>' +
+      '<div class="q-kpi__value q-kpi__value--' + k.cls + '">' + esc(k.value) +
+      '<span>' + esc(k.unit) + '</span></div></div>';
+  }).join("");
+  const html = QUALITY_ROWS.map(function (r) {
+    return '<div class="exc-detail-row" data-id="' + esc(r.id) + '">' +
+      '<div class="exc-detail-row__top">' + statusBadge(r.status, r.statusLabel) +
+      '<span class="exc-detail-row__id">' + esc(r.batch) + '</span></div>' +
+      '<div class="exc-detail-row__grid">' +
+      '<span><em>品名</em>' + esc(r.name) + '</span>' +
+      '<span><em>釜</em>' + esc(r.kettle) + '</span>' +
+      '<span style="grid-column:1/-1"><em>指标</em>' + esc(r.item) + '</span>' +
+      '</div></div>';
+  }).join("");
+  setScrollList(document.getElementById("quality-list"), html);
+}
+
+function renderMetrics() {
+  document.getElementById("metric-strip").innerHTML = METRICS.map(function (m) {
+    return '<div class="metric-card' + (m.theme === "violet" ? " metric-card--violet" : "") + '">' +
+      ringGauge(m.pct, m.theme, m.icon) +
+      '<div class="metric-card__info"><div class="metric-card__label">' + esc(m.label) + '</div>' +
+      '<div class="metric-card__value">' + esc(m.value) + '<span>' + esc(m.unit) + '</span></div>' +
+      '<div class="metric-card__sub">' + esc(m.sub) + '</div></div></div>';
+  }).join("");
+}
+
+function renderCap() {
+  document.getElementById("cap-summary").innerHTML = CAP_SUMMARY.map(function (c) {
+    return '<div class="cycle-tier-box cycle-tier-box--' + c.theme + '">' +
+      '<div class="cycle-tier-box__count cycle-tier-box__count--' + c.theme + '">' + esc(c.count) + '</div>' +
+      '<div class="cycle-tier-box__label">' + esc(c.label) + '</div></div>';
+  }).join("");
+  const html = CAP_LINES.map(function (l) {
+    const pct = Math.round((l.actual / l.plan) * 1000) / 10;
+    const fillCls = l.status === "warn" ? "progress-bar__fill progress-bar__fill--warn" : "progress-bar__fill";
+    return '<div class="progress-card progress-card--compact progress-card--packaging' +
+      (l.theme === "violet" ? " progress-card--violet" : "") + '">' +
+      '<div class="progress-card__top">' +
+      statusBadge(l.status === "warn" ? "warn" : "running", l.status === "warn" ? "落后计划" : "执行中") +
+      '<span class="progress-card__pct">' + pct + '%</span></div>' +
+      '<div class="progress-card__inline"><b>' + esc(l.name) + '</b> · ' + esc(l.code) +
+      ' · ' + l.actual + '/' + l.plan + ' ' + esc(l.unit) + '</div>' +
+      '<div class="progress-bar"><div class="' + fillCls + '" style="width:' + Math.min(100, pct) + '%"></div></div></div>';
+  }).join("");
+  setScrollList(document.getElementById("cap-list"), html);
+}
+
+function renderAlarms() {
+  const crit = ALARMS.filter(function (a) { return a.level === "critical"; }).length;
+  document.getElementById("alarm-meta").textContent = "紧急 " + crit + " · 共 " + ALARMS.length;
+  const html = ALARMS.map(function (a) {
+    const st = a.level === "critical" ? "danger" : a.level === "urgent" ? "warn" : "pending";
+    const lab = a.level === "critical" ? "紧急" : a.level === "urgent" ? "次紧急" : "提示";
+    return '<div class="exc-detail-row" data-alarm="' + esc(a.id) + '">' +
+      '<div class="exc-detail-row__top">' + statusBadge(st, lab) +
+      '<span class="exc-detail-row__id">' + esc(a.tag) + '</span></div>' +
+      '<div class="exc-detail-row__grid">' +
+      '<span><em>设备</em>' + esc(a.kettle) + '</span>' +
+      '<span><em>时间</em>' + esc(a.time) + '</span>' +
+      '<span style="grid-column:1/-1"><em>描述</em>' + esc(a.msg) + '</span></div></div>';
+  }).join("");
+  setScrollList(document.getElementById("alarm-list"), html);
+  document.getElementById("alarm-list").onclick = function (e) {
+    const row = e.target.closest(".exc-detail-row");
+    if (!row) return;
+    const id = row.getAttribute("data-alarm");
+    const a = ALARMS.find(function (x) { return x.id === id; });
+    if (!a) return;
+    const k = findEquip(a.kettle);
+    if (k) {
+      selectedKettle = k.id;
+      renderTwin();
+      openKettleDetail(k);
+    } else {
+      openDetail(a.tag + " · " + a.kettle, '<p style="color:var(--text-secondary);line-height:1.7">' +
+        esc(a.msg) + '</p><p style="margin-top:10px;color:var(--text-muted)">告警时间 ' + esc(a.time) +
+        ' · 来源 DCS</p>');
+    }
+  };
+}
+
+function renderEnv() {
+  document.getElementById("env-grid").innerHTML = ENV_POINTS.map(function (p) {
+    return '<div class="env-mini-card' + (p.alert ? " env-mini-card--alert" : "") + '">' +
+      (p.alert ? '<span class="env-mini-card__tag">异常</span>' : "") +
+      '<div class="env-mini-card__name">' + esc(p.name) + '</div>' +
+      '<div class="env-mini-card__value">' + esc(p.value) +
+      '<span class="env-mini-card__value-unit">' + esc(p.unit) + '</span></div>' +
+      '<div class="env-mini-card__range">' + esc(p.range) + '</div></div>';
+  }).join("");
+}
+
+function statusLabel(st) {
+  return ({ running: "运行", warn: "预警", danger: "告警", idle: "空闲" })[st] || st;
+}
+function findEquip(id) {
+  return KETTLES.find(function (x) { return x.id === id; });
+}
+function pickPoint(points, keys) {
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    const p = points.find(function (x) {
+      return x.tag.indexOf(key) >= 0 || x.name.indexOf(key) >= 0;
+    });
+    if (p) return p;
+  }
+  return points[0];
+}
+function fmtPoint(p) {
+  if (!p) return "—";
+  if (typeof p.value === "number") {
+    const n = Math.abs(p.value) >= 100 ? p.value.toFixed(0) : (Number.isInteger(p.value) ? String(p.value) : p.value.toFixed(1));
+    return n + (p.unit ? p.unit : "");
+  }
+  return String(p.value) + (p.unit ? p.unit : "");
+}
+function twinShell(hudCells, canvasHtml, footText) {
+  return '<div class="twin-view">' +
+    '<div class="twin-hud">' + hudCells.map(function (c) {
+      return '<div class="twin-hud__cell' + (c.cls ? " twin-hud__cell--" + c.cls : "") + '"><em>' +
+        esc(c.label) + '</em><b>' + esc(c.value) + (c.unit ? "<span>" + esc(c.unit) + "</span>" : "") + "</b></div>";
+    }).join("") + "</div>" +
+    '<div class="twin-canvas">' + canvasHtml + "</div>" +
+    '<div class="twin-foot"><span>' + footText + '</span><span class="twin-live">DCS 实时刷新</span></div></div>';
+}
+
+function openKettleDetail(k) {
+  const rows = (k.points || []).map(function (p) {
+    const cls = p.state === "alarm" ? "dcs-row--alarm" : p.state === "warn" ? "dcs-row--warn" : "";
+    const lim = (p.lo != null && p.hi != null) ? (p.lo + " ~ " + p.hi + (p.unit ? " " + p.unit : "")) : "—";
+    const st = p.state === "alarm" ? "告警" : p.state === "warn" ? "预警" : "正常";
+    return '<tr class="' + cls + '"><td>' + esc(p.tag) + '</td><td>' + esc(p.name) +
+      '</td><td class="dcs-val" data-live="' + esc(p.tag) + '">' + esc(fmtPoint(p)) +
+      '</td><td>' + esc(lim) + '</td><td>' + esc(st) + '</td></tr>';
+  }).join("");
+  const meta = [];
+  if (k.capacity) meta.push(["规格", k.capacity]);
+  meta.push(["状态", statusLabel(k.status)]);
+  if (k.product) meta.push(["产品", k.product]);
+  if (k.batch) meta.push(["批号", k.batch]);
+  if (k.stage) meta.push(["工艺阶段", k.stage]);
+  if (k.progress != null) meta.push(["进度", k.progress + "%"]);
+  openDetail(k.id + " · DCS 点位",
+    '<div class="dcs-meta">' + meta.map(function (m) {
+      return '<div class="dcs-meta__item"><em>' + esc(m[0]) + '</em><b>' + esc(m[1]) + '</b></div>';
+    }).join("") + "</div>" +
+    '<table class="dcs-table"><thead><tr><th>位号</th><th>描述</th><th>现值</th><th>工艺窗</th><th>状态</th></tr></thead><tbody>' +
+    rows + "</tbody></table>" +
+    '<p style="margin-top:12px;color:var(--text-muted);line-height:1.6">预溶核心控制：N₂ 微正压防潮、釜温 4–10℃、搅拌转速/电流、水分与 HF 在线监测；超限联锁并推送本看板。</p>');
+}
+
+function reactorTitle(id) {
+  const m = String(id).match(/(\d+)\s*#?/);
+  if (m) return esc(m[1]) + "#预溶釜";
+  return esc(id) + "预溶釜";
+}
+function fmtSigned(val, digits) {
+  if (typeof val !== "number" || isNaN(val)) return "+0" + (digits ? ".00" : ".0");
+  const n = val.toFixed(digits);
+  return (val >= 0 ? "+" : "") + n;
+}
+function reactorReadouts(k) {
+  const pts = k.points || [];
+  const curP = pts.find(function (p) { return p.unit === "A" || p.name.indexOf("电流") >= 0; });
+  const siP = pickPoint(pts, ["SI", "转速"]);
+  const ttP = pickPoint(pts, ["TT", "温度"]);
+  const ptP = pickPoint(pts, ["PT", "压力"]);
+  let amp = 0, ampTag = "SI-A", ampState = "normal";
+  if (curP && typeof curP.value === "number") {
+    amp = curP.value; ampTag = curP.tag; ampState = curP.state;
+  } else if (siP && typeof siP.value === "number") {
+    amp = Math.round(siP.value * 0.32 * 10) / 10;
+    ampTag = siP.tag; ampState = siP.state;
+  }
+  const t1 = (ttP && typeof ttP.value === "number") ? ttP.value : 0;
+  const t1Tag = ttP ? ttP.tag : "TT";
+  const t1State = ttP ? ttP.state : "normal";
+  const t2 = k.status === "idle" ? Math.round((t1) * 10) / 10 : Math.round((t1 - 1.2) * 10) / 10;
+  const t2Tag = t1Tag + "-JK";
+  let mpa = 0, mpaTag = "PT", mpaState = "normal";
+  if (ptP && typeof ptP.value === "number") {
+    mpa = ptP.unit === "MPa" || ptP.unit === "Mpa" ? ptP.value : ptP.value / 1000;
+    mpaTag = ptP.tag; mpaState = ptP.state;
+  }
+  function ro(val, digits, unit, tag, state) {
+    const cls = state === "alarm" ? " rk__ro--alarm" : state === "warn" ? " rk__ro--warn" : "";
+    return '<div class="rk__ro' + cls + '"><b data-live-rk="' + esc(tag) + '" data-digits="' + digits + '">' +
+      fmtSigned(val, digits) + '</b><span>' + unit + "</span></div>";
+  }
+  return ro(amp, 1, "A", ampTag, ampState) +
+    ro(t1, 2, "℃", t1Tag, t1State) +
+    ro(t2, 2, "℃", t2Tag, t1State) +
+    ro(mpa, 2, "Mpa", mpaTag, mpaState);
+}
+
+function kettleCardHtml(k) {
+  const sel = k.id === selectedKettle ? " rk--selected" : "";
+  const size = k.size === "lg" ? "lg" : "sm";
+  return '<div class="rk rk--' + size + " rk--" + k.status + sel + '" data-equip="' + esc(k.id) + '">' +
+    '<div class="rk__tank">' +
+      '<div class="rk__motor"></div>' +
+      '<div class="rk__body"></div>' +
+      '<div class="rk__legs"><span></span><span></span><span></span><span></span></div>' +
+      '<div class="rk__name">' + reactorTitle(k.id) + "</div>" +
+      '<div class="rk__readouts">' + reactorReadouts(k) + "</div>" +
+    "</div>" +
+    '<div class="rk__status">' + esc(statusLabel(k.status)) + "</div>" +
+    '<div class="rk__cap">' + esc(k.capacity || "") + "</div></div>";
+}
+
+function renderPre() {
+  const small = KETTLES.filter(function (k) { return k.size !== "lg"; });
+  const large = KETTLES.filter(function (k) { return k.size === "lg"; });
+  const run = KETTLES.filter(function (k) { return k.status === "running"; }).length;
+  const abn = KETTLES.filter(function (k) { return k.status === "danger" || k.status === "warn"; }).length;
+  const avgT = (KETTLES.reduce(function (s, k) {
+    const t = pickPoint(k.points, ["TT"]);
+    return s + (typeof t.value === "number" ? t.value : 0);
+  }, 0) / KETTLES.length).toFixed(1);
+  const hud = [
+    { label: "预溶釜", value: "7", unit: "台" },
+    { label: "小釜 / 大釜", value: small.length + " / " + large.length, unit: "" },
+    { label: "运行中", value: String(run), unit: "台" },
+    { label: "异常釜", value: String(abn), unit: "台", cls: abn ? "danger" : "" },
+    { label: "平均釜温", value: avgT, unit: "℃", cls: Number(avgT) > 10 ? "warn" : "" }
+  ];
+  const canvas =
+    '<div class="kettle-board">' +
+      '<div class="kettle-board__row">' + small.map(kettleCardHtml).join("") + "</div>" +
+      '<div class="kettle-board__row">' + large.map(kettleCardHtml).join("") + "</div>" +
+    "</div>";
+  return twinShell(hud, canvas, "<strong>预溶车间</strong>：上排 4×5 m³ · 下排 3 大釜 · DCS 绿字实时读数");
+}
+
+function bindTwinClicks(stage) {
+  stage.querySelectorAll("[data-equip]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      selectedKettle = el.getAttribute("data-equip");
+      const eq = findEquip(selectedKettle);
+      renderTwin();
+      if (eq) openKettleDetail(eq);
+    });
+  });
+}
+
+function jitterLivePoints() {
+  if (IS_EMBEDDED) return;
+  KETTLES.forEach(function (eq) {
+    (eq.points || []).forEach(function (p) {
+      if (typeof p.value !== "number" || p.state === "alarm") return;
+      if (p.tag.indexOf("TT") === 0 || p.name.indexOf("温度") >= 0) {
+        p.value = Math.round((p.value + (Math.random() - 0.5) * 0.2) * 10) / 10;
+      } else if (p.tag.indexOf("SI") === 0 || p.name.indexOf("转速") >= 0 || p.unit === "A") {
+        p.value = Math.round((p.value + (Math.random() - 0.5) * (p.unit === "A" ? 0.2 : 2)) * 10) / 10;
+      } else if (p.unit === "%" && p.tag.indexOf("LT") === 0) {
+        p.value = Math.round((p.value + (Math.random() - 0.5) * 0.4) * 10) / 10;
+      } else if (p.tag.indexOf("PT") === 0) {
+        p.value = Math.round((p.value + (Math.random() - 0.5) * 0.05) * 100) / 100;
+      }
+    });
+  });
+  document.querySelectorAll("[data-live]").forEach(function (node) {
+    const tag = node.getAttribute("data-live");
+    if (!tag) return;
+    for (let i = 0; i < KETTLES.length; i++) {
+      const p = (KETTLES[i].points || []).find(function (x) { return x.tag === tag; });
+      if (p) { node.textContent = fmtPoint(p); break; }
+    }
+  });
+  document.querySelectorAll(".rk[data-equip]").forEach(function (el) {
+    const eq = findEquip(el.getAttribute("data-equip"));
+    if (!eq) return;
+    const box = el.querySelector(".rk__readouts");
+    if (box) box.innerHTML = reactorReadouts(eq);
+  });
+}
+
+function renderTwin() {
+  const stage = document.getElementById("twin-stage");
+  stage.innerHTML = renderPre();
+  bindTwinClicks(stage);
+  if (!IS_EMBEDDED && !twinLiveTimer) twinLiveTimer = setInterval(jitterLivePoints, 2000);
+}
+
+function tickClock() {
+  const d = new Date();
+  const p = function (n) { return String(n).padStart(2, "0"); };
+  document.getElementById("live-clock").textContent =
+    p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+}
+
+function initAtmosphere() {
+  const star = document.getElementById("starfield");
+  const part = document.getElementById("particles");
+  const sctx = star.getContext("2d");
+  const pctx = part.getContext("2d");
+  let stars = [], blobs = [];
+  function resize() {
+    star.width = part.width = window.innerWidth;
+    star.height = part.height = window.innerHeight;
+    stars = Array.from({ length: IS_EMBEDDED ? 60 : 120 }, function () {
+      return {
+        x: Math.random() * star.width, y: Math.random() * star.height,
+        r: Math.random() * 1.2 + 0.2, a: Math.random(), v: Math.random() * 0.02 + 0.005
+      };
+    });
+    blobs = Array.from({ length: IS_EMBEDDED ? 8 : 18 }, function () {
+      return {
+        x: Math.random() * part.width, y: Math.random() * part.height,
+        r: Math.random() * 40 + 20, vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+        c: Math.random() > 0.5 ? "rgba(0,242,255,0.08)" : "rgba(176,38,255,0.07)"
+      };
+    });
+  }
+  function paintOnce() {
+    sctx.clearRect(0, 0, star.width, star.height);
+    stars.forEach(function (s) {
+      sctx.beginPath(); sctx.fillStyle = "rgba(200,240,255," + (0.25 + s.a * 0.55) + ")";
+      sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); sctx.fill();
+    });
+    pctx.clearRect(0, 0, part.width, part.height);
+    blobs.forEach(function (b) {
+      const g = pctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+      g.addColorStop(0, b.c); g.addColorStop(1, "transparent");
+      pctx.fillStyle = g; pctx.beginPath(); pctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); pctx.fill();
+    });
+  }
+  function frame() {
+    sctx.clearRect(0, 0, star.width, star.height);
+    stars.forEach(function (s) {
+      s.a += s.v; if (s.a > 1 || s.a < 0) s.v *= -1;
+      sctx.beginPath(); sctx.fillStyle = "rgba(200,240,255," + (0.25 + s.a * 0.55) + ")";
+      sctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); sctx.fill();
+    });
+    pctx.clearRect(0, 0, part.width, part.height);
+    blobs.forEach(function (b) {
+      b.x += b.vx; b.y += b.vy;
+      if (b.x < -50) b.x = part.width + 50; if (b.x > part.width + 50) b.x = -50;
+      if (b.y < -50) b.y = part.height + 50; if (b.y > part.height + 50) b.y = -50;
+      const g = pctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+      g.addColorStop(0, b.c); g.addColorStop(1, "transparent");
+      pctx.fillStyle = g; pctx.beginPath(); pctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); pctx.fill();
+    });
+    requestAnimationFrame(frame);
+  }
+  resize();
+  if (IS_EMBEDDED) {
+    paintOnce();
+  } else {
+    frame();
+    window.addEventListener("resize", resize);
+  }
+}
+
+function initPanelGlowParticles() {
+  if (IS_EMBEDDED) return;
+  document.querySelectorAll(".panel-glow-particles canvas").forEach(function (canvas) {
+    const ctx = canvas.getContext("2d");
+    const host = canvas.parentElement;
+    let dots = [];
+    function resize() {
+      const r = host.getBoundingClientRect();
+      canvas.width = r.width; canvas.height = r.height;
+      dots = Array.from({ length: 16 }, function () {
+        return {
+          x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+          r: Math.random() * 2.2 + 0.6, a: Math.random(),
+          va: (Math.random() - 0.5) * 0.02, vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15
+        };
+      });
+    }
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      dots.forEach(function (d) {
+        d.x += d.vx; d.y += d.vy; d.a += d.va;
+        if (d.a < 0.15 || d.a > 0.9) d.va *= -1;
+        if (d.x < 0) d.x = canvas.width; if (d.x > canvas.width) d.x = 0;
+        if (d.y < 0) d.y = canvas.height; if (d.y > canvas.height) d.y = 0;
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(0,242,255," + d.a * 0.45 + ")";
+        ctx.ellipse(d.x, d.y, d.r * 1.6, d.r, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(draw);
+    }
+    resize(); draw();
+    window.addEventListener("resize", resize);
+  });
+}
+
+function refreshAll() {
+  document.getElementById("header-kpis").innerHTML = headerKpisHtml(HEADER_STATS);
+  renderMetrics();
+  renderExc();
+  renderQuality();
+  renderCap();
+  renderAlarms();
+  renderEnv();
+  renderTwin();
+}
+
+document.getElementById("detail-close").addEventListener("click", closeDetail);
+document.getElementById("detail-overlay").addEventListener("click", function (e) {
+  if (e.target.id === "detail-overlay") closeDetail();
+});
+document.getElementById("btn-refresh").addEventListener("click", refreshAll);
+
+tickClock();
+setInterval(tickClock, 1000);
+initAtmosphere();
+refreshAll();
+initPanelGlowParticles();
+</script>
+</body>
+</html>

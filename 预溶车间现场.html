@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>乾锐科技 · 预溶车间现场大屏</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0c; }
+
+  .scene { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+  .scene__wall {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: 52% 42%;
+    user-select: none; pointer-events: none;
+  }
+
+  /* Soft vignette so TV reads clearer on busy plant photo */
+  .scene__shade {
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    background:
+      radial-gradient(ellipse 70% 60% at 48% 38%, transparent 35%, rgba(0,0,0,0.35) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.18), transparent 28%, transparent 72%, rgba(0,0,0,0.28));
+  }
+
+  .scene__label {
+    position: absolute; left: 18px; top: 16px; z-index: 5;
+    padding: 8px 12px; border-radius: 8px;
+    background: rgba(0, 8, 20, 0.55); color: rgba(255,255,255,0.88);
+    font: 600 13px/1.35 system-ui, sans-serif;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 242, 255, 0.25);
+    pointer-events: none;
+  }
+  .scene__label small {
+    display: block; margin-top: 3px; font-weight: 500; font-size: 11px;
+    color: rgba(180, 220, 240, 0.75); letter-spacing: 0.5px;
+  }
+
+  .tv-stage {
+    position: absolute;
+    left: 48%;
+    top: 36%;
+    width: min(62vw, 1040px);
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    overflow: visible;
+  }
+
+  .tv-persp {
+    position: relative;
+    width: 100%;
+    transform-style: preserve-3d;
+  }
+
+  .tv-persp::before {
+    content: "";
+    position: absolute;
+    left: 8%; right: -4%; top: 10%; bottom: -12%;
+    border-radius: 16px;
+    background: rgba(0,0,0,0.4);
+    filter: blur(28px);
+    transform: perspective(1400px) rotateX(3deg) rotateY(4deg) rotateZ(0.4deg) translateZ(-14px);
+    z-index: -1;
+  }
+
+  .tv {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: visible;
+    transform-origin: 55% 50%;
+    /* Mild perspective matching workshop wall / mezzanine plane */
+    transform: perspective(1400px) rotateX(3deg) rotateY(4deg) rotateZ(0.4deg);
+    background: linear-gradient(145deg, #2a2d32 0%, #121417 45%, #08090b 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.14) inset,
+      0 0 0 1px rgba(0,0,0,0.85),
+      -6px 18px 40px rgba(0,0,0,0.5),
+      0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  .tv__frame {
+    position: absolute; inset: 0; border-radius: 12px; pointer-events: none;
+    background: linear-gradient(180deg, #1e2126 0%, #0b0c0f 100%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  .tv__touch-edge {
+    position: absolute; inset: 11px; border-radius: 6px; pointer-events: none;
+    box-shadow:
+      0 0 0 1px rgba(90, 200, 255, 0.25),
+      0 0 14px rgba(0, 180, 255, 0.12);
+  }
+
+  .tv__screen {
+    position: absolute; inset: 14px; border-radius: 4px;
+    overflow: hidden; background: #000617;
+    isolation: isolate;
+  }
+
+  .tv__viewport {
+    position: absolute; inset: 0; overflow: hidden; background: #000617;
+  }
+
+  .tv__viewport iframe {
+    position: absolute; top: 0; left: 0;
+    width: 1920px; height: 1080px; border: 0; display: block;
+    background: #000617; transform-origin: 0 0;
+    backface-visibility: hidden; will-change: transform;
+  }
+
+  .tv__glass {
+    position: absolute; inset: 0; pointer-events: none; border-radius: 4px;
+    background: linear-gradient(115deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 12%, transparent 30%);
+    opacity: 0.5;
+  }
+
+  .tv__home {
+    position: absolute; left: 50%; bottom: 2px; width: 40px; height: 3px;
+    border-radius: 999px; transform: translateX(-50%);
+    background: rgba(255,255,255,0.28); pointer-events: none;
+  }
+  .tv__led {
+    position: absolute; right: 14px; bottom: 3px; width: 5px; height: 5px;
+    border-radius: 50%; background: #3cf07a;
+    box-shadow: 0 0 7px rgba(60, 240, 122, 0.9); pointer-events: none;
+  }
+  .tv__badge {
+    position: absolute; left: 12px; bottom: 2px;
+    font: 600 7px/1 system-ui, sans-serif; letter-spacing: 1px;
+    color: rgba(255,255,255,0.28); text-transform: uppercase; pointer-events: none;
+  }
+
+  .tv__stylus {
+    position: absolute; right: -10px; top: 22%; width: 12px; height: 48%;
+    z-index: 8; pointer-events: none;
+    filter: drop-shadow(2px 4px 5px rgba(0,0,0,0.5));
+  }
+  .tv__stylus-body {
+    position: absolute; left: 2px; top: 8%; bottom: 10%; width: 9px; border-radius: 999px;
+    background: linear-gradient(90deg, #15171a, #4a4f58 25%, #d5d8de 50%, #2a2e34 100%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+  }
+  .tv__stylus-tip {
+    position: absolute; left: 50%; top: 0; width: 5px; height: 10%;
+    transform: translateX(-50%); border-radius: 50% 50% 2px 2px;
+    background: linear-gradient(180deg, #e8eaee, #6a7078);
+  }
+  .tv__stylus-cap {
+    position: absolute; left: 50%; bottom: 0; width: 7px; height: 11%;
+    transform: translateX(-50%); border-radius: 2px 2px 4px 4px;
+    background: linear-gradient(180deg, #3a3f48, #15181c);
+  }
+
+  .hint {
+    position: absolute; right: 16px; bottom: 14px; z-index: 5;
+    padding: 6px 10px; border-radius: 8px;
+    background: rgba(0,0,0,0.5); color: rgba(255,255,255,0.8);
+    font: 12px/1.3 system-ui, sans-serif; pointer-events: none;
+  }
+
+  @media (max-width: 900px) {
+    .tv-stage { width: min(78vw, 820px); top: 34%; }
+    .scene__label { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="scene">
+    <img class="scene__wall" src="workshop-bg.png" alt="乾锐预溶车间现场" />
+    <div class="scene__shade" aria-hidden="true"></div>
+
+    <div class="scene__label">
+      合肥乾锐科技 · 预溶车间
+      <small>现场工业大屏 · 实时 DCS 孪生</small>
+    </div>
+
+    <div class="tv-stage">
+      <div class="tv-persp">
+        <div class="tv" aria-label="预溶车间触控大屏">
+          <div class="tv__frame" aria-hidden="true"></div>
+          <div class="tv__touch-edge" aria-hidden="true"></div>
+          <div class="tv__screen">
+            <div class="tv__viewport" id="tv-viewport">
+              <iframe
+                id="tv-iframe"
+                src="预溶车间.html?embed=1"
+                title="乾锐科技 · 预溶车间驾驶舱"
+                allow="fullscreen"
+                loading="eager"
+              ></iframe>
+            </div>
+            <div class="tv__glass" aria-hidden="true"></div>
+          </div>
+          <span class="tv__home" aria-hidden="true"></span>
+          <span class="tv__led" aria-hidden="true"></span>
+          <span class="tv__badge" aria-hidden="true">Touch</span>
+          <div class="tv__stylus" aria-hidden="true">
+            <span class="tv__stylus-tip"></span>
+            <span class="tv__stylus-body"></span>
+            <span class="tv__stylus-cap"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint">预溶车间现场大屏 · 仅展示预溶业务</div>
+  </div>
+
+<script>
+(function () {
+  var DESIGN_W = 1920, DESIGN_H = 1080;
+  var viewport = document.getElementById("tv-viewport");
+  var iframe = document.getElementById("tv-iframe");
+  var lastKey = "";
+  function fit() {
+    var w = viewport.clientWidth, h = viewport.clientHeight;
+    if (!w || !h) return;
+    var scale = Math.max(w / DESIGN_W, h / DESIGN_H);
+    var left = (w - DESIGN_W * scale) / 2;
+    var top = (h - DESIGN_H * scale) / 2;
+    var key = w + "x" + h + ":" + scale.toFixed(5);
+    if (key === lastKey) return;
+    lastKey = key;
+    iframe.style.transform = "translate3d(" + left + "px," + top + "px,0) scale(" + scale + ")";
+    iframe.style.left = "0";
+    iframe.style.top = "0";
+  }
+  fit();
+  window.addEventListener("resize", fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(viewport);
+  iframe.addEventListener("load", fit);
+})();
+</script>
+</body>
+</html>
